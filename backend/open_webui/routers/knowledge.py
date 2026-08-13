@@ -18,7 +18,14 @@ from open_webui.events import EVENTS, publish_event
 from open_webui.internal.db import get_async_session
 from open_webui.models.access_grants import AccessGrants
 from open_webui.models.config import Config
-from open_webui.models.files import FileMetadataResponse, FileModel, FileModelResponse, Files
+from open_webui.models.files import (
+    FileForm,
+    FileMetadataResponse,
+    FileModel,
+    FileModelResponse,
+    Files,
+    FileUpdateForm,
+)
 from open_webui.models.groups import Groups
 from open_webui.models.knowledge import (
     KNOWLEDGE_SORTABLE_FIELDS,
@@ -31,8 +38,8 @@ from open_webui.models.knowledge import (
     KnowledgeUserResponse,
 )
 from open_webui.models.models import ModelForm, Models
-from open_webui.retrieval.vector.async_client import ASYNC_VECTOR_DB_CLIENT
 from open_webui.retrieval.external import retrieve_external_knowledge, retrieve_external_knowledge_for_connection
+from open_webui.retrieval.vector.async_client import ASYNC_VECTOR_DB_CLIENT
 from open_webui.routers.retrieval import (
     BatchProcessFilesForm,
     ProcessFileForm,
@@ -43,6 +50,8 @@ from open_webui.storage.provider import Storage
 from open_webui.utils.access_control import filter_allowed_access_grants, has_permission
 from open_webui.utils.access_control.files import has_access_to_file
 from open_webui.utils.auth import get_admin_user, get_verified_user
+from open_webui.utils.ragflow_shadow import binding as ragflow_binding
+from open_webui.utils.ragflow_shadow import set_document_enabled
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -1549,6 +1558,106 @@ async def update_file_from_knowledge_by_id(
 
 
 ############################
+# SyncRagflowShadowFiles
+############################
+
+
+class RagflowShadowDocument(BaseModel):
+    document_id: str
+    file_id: str | None = None
+    name: str
+    content_type: str | None = None
+    size: int | None = None
+    enabled: bool = True
+
+
+class RagflowShadowSyncForm(BaseModel):
+    dataset_resource_id: str
+    dataset_id: str
+    documents: list[RagflowShadowDocument]
+
+
+@router.post('/{id}/ragflow/files/sync', response_model=dict)
+async def sync_ragflow_shadow_files(
+    id: str,
+    form_data: RagflowShadowSyncForm,
+    user=Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    knowledge = await Knowledges.get_knowledge_by_id(id=id, db=db)
+    if not knowledge:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ERROR_MESSAGES.NOT_FOUND)
+
+    if 'managed_by=ow-ragflow-sync; origin=ragflow' not in (knowledge.description or ''):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Knowledge base is not a RAGFlow metadata shadow',
+        )
+    desired_ids: set[str] = set()
+    enabled_count = 0
+    for document in form_data.documents:
+        file_id = document.file_id or str(
+            uuid.uuid5(uuid.NAMESPACE_URL, f'ow-ragflow:{form_data.dataset_id}:{document.document_id}')
+        )
+        desired_ids.add(file_id)
+        file = await Files.get_file_by_id(file_id, db=db)
+        origin = 'openwebui' if document.file_id else 'ragflow'
+        metadata = {
+            'name': document.name,
+            'content_type': document.content_type or 'application/octet-stream',
+            'size': document.size,
+            'data': {'knowledge_id': id, 'directory_id': None},
+            'collection_name': id,
+            'ragflow': {
+                'origin': origin,
+                'dataset_resource_id': form_data.dataset_resource_id,
+                'dataset_id': form_data.dataset_id,
+                'document_id': document.document_id,
+            },
+        }
+        if file is None and document.enabled:
+            file = await Files.insert_new_file(
+                knowledge.user_id,
+                FileForm(
+                    id=file_id,
+                    filename=document.name,
+                    path=None,
+                    data={'status': 'completed'},
+                    meta=metadata,
+                ),
+                db=db,
+            )
+        elif file is not None:
+            await Files.update_file_by_id(file_id, FileUpdateForm(meta=metadata), db=db)
+            if file.filename != document.name:
+                await Files.update_file_name_by_id(file_id, document.name, db=db)
+
+        linked = await Knowledges.has_file(knowledge_id=id, file_id=file_id, db=db)
+        if document.enabled:
+            enabled_count += 1
+            if file is not None and not linked:
+                await Knowledges.add_file_to_knowledge_by_id(
+                    knowledge_id=id,
+                    file_id=file_id,
+                    user_id=knowledge.user_id,
+                    db=db,
+                )
+        elif linked:
+            await Knowledges.remove_file_from_knowledge_by_id(id, file_id, db=db)
+            if origin == 'ragflow':
+                await Files.delete_file_by_id(file_id, db=db)
+
+    for file in await Knowledges.get_files_by_id(id, db=db):
+        value = ragflow_binding(file.meta)
+        if not value or value.get('dataset_id') != form_data.dataset_id or file.id in desired_ids:
+            continue
+        await Knowledges.remove_file_from_knowledge_by_id(id, file.id, db=db)
+        if value.get('origin') == 'ragflow':
+            await Files.delete_file_by_id(file.id, db=db)
+
+    return {'total': enabled_count}
+
+############################
 # RemoveFileFromKnowledge
 ############################
 
@@ -1601,6 +1710,10 @@ async def remove_file_from_knowledge_by_id(
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
 
+    value = ragflow_binding(file.meta)
+    if value:
+        await set_document_enabled(value, user, enabled=False)
+
     await Knowledges.remove_file_from_knowledge_by_id(knowledge_id=id, file_id=form_data.file_id, db=db)
 
     # Remove content from the vector database
@@ -1618,7 +1731,9 @@ async def remove_file_from_knowledge_by_id(
         pass
 
     # Anyone with write permission or higher can delete files
-    if delete_file and (file.user_id == user.id or user.role == 'admin'):
+    if delete_file and (not value or value.get('origin') == 'ragflow') and (
+        file.user_id == user.id or user.role == 'admin'
+    ):
         try:
             # Remove the file's collection from vector database
             file_collection = f'file-{form_data.file_id}'

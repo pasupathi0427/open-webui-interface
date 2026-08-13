@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
+import httpx
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -28,8 +29,8 @@ from open_webui.events import EVENTS, publish_event
 from open_webui.internal.db import get_async_db_context, get_async_session
 from open_webui.models.access_grants import AccessGrants
 from open_webui.models.channels import Channels
-from open_webui.models.config import Config
 from open_webui.models.chats import Chats
+from open_webui.models.config import Config
 from open_webui.models.files import (
     FileForm,
     FileListResponse,
@@ -46,6 +47,8 @@ from open_webui.routers.retrieval import ProcessFileForm, process_file
 from open_webui.storage.provider import Storage
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.misc import strict_match_mime_type
+from open_webui.utils.ragflow_shadow import binding as ragflow_binding
+from open_webui.utils.ragflow_shadow import syncer_headers, syncer_url
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -796,6 +799,46 @@ async def get_file_content_by_id(
 
     if file.user_id == user.id or user.role == 'admin' or await has_access_to_file(id, 'read', user, db=db):
         try:
+            value = ragflow_binding(file.meta)
+            if value:
+                client = httpx.AsyncClient(timeout=None)
+                response = await client.send(
+                    client.build_request(
+                        'GET',
+                        f'{syncer_url(value)}/content',
+                        headers=syncer_headers(user),
+                    ),
+                    stream=True,
+                )
+                if response.status_code >= 400:
+                    body = (await response.aread()).decode(errors='replace')
+                    await response.aclose()
+                    await client.aclose()
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f'RAGFlow document download failed: {body[:200]}',
+                    )
+
+                async def chunks():
+                    try:
+                        async for chunk in response.aiter_bytes():
+                            yield chunk
+                    finally:
+                        await response.aclose()
+                        await client.aclose()
+
+                filename = (file.meta or {}).get('name', file.filename)
+                encoded_filename = quote(filename)
+                disposition = 'attachment' if attachment else 'inline'
+                return StreamingResponse(
+                    chunks(),
+                    media_type=(file.meta or {}).get('content_type', 'application/octet-stream'),
+                    headers={
+                        'Content-Disposition': f"{disposition}; filename*=UTF-8''{encoded_filename}",
+                        'Cache-Control': 'private, no-store',
+                        'X-Content-Type-Options': 'nosniff',
+                    },
+                )
             file_path = await asyncio.to_thread(Storage.get_file, file.path)
             file_path = Path(file_path)
 
