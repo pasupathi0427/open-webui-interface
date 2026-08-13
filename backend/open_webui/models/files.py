@@ -106,7 +106,7 @@ class FileForm(BaseModel):
     id: str
     hash: str | None = None
     filename: str
-    path: str
+    path: str | None = None
     data: dict = {}
     meta: dict = {}
 
