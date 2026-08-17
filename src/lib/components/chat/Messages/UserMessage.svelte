@@ -526,7 +526,9 @@
 							</div>
 						{/if}
 					{/if}
-					{#if !compactPreview && !readOnly}
+					{#if !compactPreview &&
+						!readOnly &&
+						($_user?.role === 'user' ? ($_user?.permissions?.chat?.edit ?? true) : true)}
 						<Tooltip content={$i18n.t('Edit')} placement="bottom">
 							<button
 								class="{($settings?.highContrastMode ?? false)

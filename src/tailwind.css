@@ -17,6 +17,44 @@
 	--color-gray-950: oklch(0.16 0 0);
 }
 
+html.karix {
+	--color-black: #020a24;
+	--color-gray-50: #f7f8fc;
+	--color-gray-100: #eef1f7;
+	--color-gray-200: #dde3ef;
+	--color-gray-300: #c5cede;
+	--color-gray-400: #a8b5cc;
+	--color-gray-500: #8a9bb8;
+	--color-gray-600: #7185a8;
+	--color-gray-700: #4d6593;
+	--color-gray-800: #173875;
+	--color-gray-850: #102c6b;
+	--color-gray-900: #020b2c;
+	--color-gray-950: #0b245b;
+	--color-blue-50: #eff3ff;
+	--color-blue-100: #dce5ff;
+	--color-blue-200: #bdccff;
+	--color-blue-300: #91a7ff;
+	--color-blue-400: #6680ff;
+	--color-blue-500: #4d66f5;
+	--color-blue-600: #3851dc;
+	--color-blue-700: #2c42b5;
+	--color-blue-800: #25388f;
+	--color-blue-900: #203272;
+	--color-blue-950: #101a42;
+}
+
+html.karix #message-input-container {
+	background: #102c6b;
+	border-color: #244b9b;
+	box-shadow: 0 12px 32px rgb(0 4 24 / 35%);
+}
+
+html.karix #send-message-button:not(:disabled) {
+	background: linear-gradient(135deg, #cf379c, #4d66f5);
+	color: #fff;
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still

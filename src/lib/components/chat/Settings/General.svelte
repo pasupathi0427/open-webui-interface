@@ -17,7 +17,7 @@
 	export let getModels: Function;
 
 	// General
-	let themes = ['dark', 'light', 'oled-dark'];
+	let themes = ['dark', 'light', 'oled-dark', 'her', 'karix'];
 	let selectedTheme = 'system';
 
 	let languages: Awaited<ReturnType<typeof getLanguages>> = [];
@@ -126,11 +126,22 @@
 	});
 
 	const applyTheme = (_theme: string) => {
-		let themeToApply = _theme === 'oled-dark' ? 'dark' : _theme === 'her' ? 'light' : _theme;
+		let themeToApply =
+			_theme === 'oled-dark'
+				? 'dark'
+				: _theme === 'her'
+					? 'light her'
+					: _theme === 'karix'
+						? 'dark karix'
+						: _theme;
 
 		if (_theme === 'system') {
 			themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 		}
+
+		['--color-gray-800', '--color-gray-850', '--color-gray-900', '--color-gray-950'].forEach(
+			(property) => document.documentElement.style.removeProperty(property)
+		);
 
 		if (themeToApply === 'dark' && !_theme.includes('oled')) {
 			document.documentElement.style.setProperty('--color-gray-800', '#333');
@@ -169,7 +180,9 @@
 							? '#000000'
 							: _theme === 'her'
 								? '#983724'
-								: '#ffffff'
+								: _theme === 'karix'
+									? '#0f2966'
+									: '#ffffff'
 				);
 			}
 		}
@@ -215,6 +228,7 @@
 					<option value="dark">🌑 {$i18n.t('Dark')}</option>
 					<option value="oled-dark">🌃 {$i18n.t('OLED Dark')}</option>
 					<option value="light">☀️ {$i18n.t('Light')}</option>
+					<option value="karix">🎨 Karix</option>
 					{#if $config?.features?.enable_easter_eggs}
 						<option value="her">🌷 Her</option>
 					{/if}

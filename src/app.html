@@ -70,6 +70,9 @@
 				} else if (localStorage.theme === 'her') {
 					document.documentElement.classList.add('her');
 					metaThemeColorTag.setAttribute('content', '#983724');
+				} else if (localStorage.theme === 'karix') {
+					document.documentElement.classList.add('dark', 'karix');
+					metaThemeColorTag.setAttribute('content', '#0f2966');
 				} else {
 					document.documentElement.classList.add('dark');
 					metaThemeColorTag.setAttribute('content', '#171717');

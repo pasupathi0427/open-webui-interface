@@ -984,12 +984,21 @@
 			theme.set(newTheme);
 
 			// Apply theme classes (mirrors logic from chat/Settings/General.svelte)
-			const themes = ['dark', 'light', 'oled-dark'];
+			const themes = ['dark', 'light', 'oled-dark', 'her', 'karix'];
 			let themeToApply =
-				newTheme === 'oled-dark' ? 'dark' : newTheme === 'her' ? 'light' : newTheme;
+				newTheme === 'oled-dark'
+					? 'dark'
+					: newTheme === 'her'
+						? 'light her'
+						: newTheme === 'karix'
+							? 'dark karix'
+							: newTheme;
 			if (newTheme === 'system') {
 				themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 			}
+			['--color-gray-800', '--color-gray-850', '--color-gray-900', '--color-gray-950'].forEach(
+				(property) => document.documentElement.style.removeProperty(property)
+			);
 			themes
 				.filter((e) => e !== themeToApply)
 				.forEach((e) => {
@@ -1419,7 +1428,7 @@
 {/if}
 
 <Toaster
-	theme={$theme.includes('dark')
+	theme={$theme.includes('dark') || $theme === 'karix'
 		? 'dark'
 		: $theme === 'system'
 			? window.matchMedia('(prefers-color-scheme: dark)').matches
