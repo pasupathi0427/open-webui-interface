@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { toast } from 'svelte-sonner';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
@@ -143,7 +144,7 @@
 										}}
 									>
 										<img
-											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
+											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
 											class=" size-9 @sm:size-10 rounded-2xl"
 											aria-hidden="true"
 											draggable="false"
@@ -151,7 +152,7 @@
 												// LICENSE covers this Open WebUI fallback logo.
 												// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 												// https://docs.openwebui.com/license.
-												e.currentTarget.src = '/favicon.png';
+												e.currentTarget.src = $brandLogoCircle;
 											}}
 										/>
 									</button>

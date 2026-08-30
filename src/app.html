@@ -6,25 +6,16 @@
 		visual, textual, symbolic identifiers, metadata, and surrounding UI.
 		Do not alter, remove, obscure, or replace it except as LICENSE permits:
 		https://docs.openwebui.com/license. -->
-		<link rel="icon" type="image/png" href="/static/favicon.png" crossorigin="use-credentials" />
 		<link
-			rel="icon"
-			type="image/png"
-			href="/static/favicon-96x96.png"
-			sizes="96x96"
-			crossorigin="use-credentials"
-		/>
-		<link
+			id="app-favicon"
 			rel="icon"
 			type="image/svg+xml"
-			href="/static/favicon.svg"
+			href="/static/karix-icons/light-rounded.svg"
 			crossorigin="use-credentials"
 		/>
-		<link rel="shortcut icon" href="/static/favicon.ico" crossorigin="use-credentials" />
 		<link
 			rel="apple-touch-icon"
-			sizes="180x180"
-			href="/static/apple-touch-icon.png"
+			href="/static/karix-icons/light-rounded.svg"
 			crossorigin="use-credentials"
 		/>
 		<link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
@@ -45,6 +36,19 @@
 		</script>
 
 		<script>
+			window.getKarixBrandAsset = (theme, shape = 'circle') => {
+				const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				const variant =
+					theme === 'karix'
+						? 'karix'
+						: theme === 'dark' ||
+							  theme === 'oled-dark' ||
+							  (theme === 'system' && systemDark)
+							? 'black'
+							: 'light';
+				return `/static/karix-icons/${variant}-${shape}.svg`;
+			};
+
 			// On page load or when changing themes, best to add inline in `head` to avoid FOUC
 			(() => {
 				const metaThemeColorTag = document.querySelector('meta[name="theme-color"]');
@@ -78,12 +82,13 @@
 					metaThemeColorTag.setAttribute('content', '#171717');
 				}
 
-				// LICENSE covers these Open WebUI splash logo assets.
-				// Do not alter, remove, obscure, or replace them except as LICENSE permits:
-				// https://docs.openwebui.com/license.
-				const preloadHref = document.documentElement.classList.contains('dark')
-					? '/static/splash-dark.png'
-					: '/static/splash.png';
+				const faviconHref = window.getKarixBrandAsset(localStorage.theme, 'rounded');
+				document.querySelector('#app-favicon')?.setAttribute('href', faviconHref);
+				document
+					.querySelector('link[rel="apple-touch-icon"]')
+					?.setAttribute('href', faviconHref);
+
+				const preloadHref = window.getKarixBrandAsset(localStorage.theme, 'full');
 				const preload = document.createElement('link');
 				preload.rel = 'preload';
 				preload.as = 'image';
@@ -102,20 +107,19 @@
 							document.documentElement.classList.remove('dark');
 							metaThemeColorTag.setAttribute('content', '#ffffff');
 						}
+						document
+							.querySelector('#app-favicon')
+							?.setAttribute('href', window.getKarixBrandAsset('system', 'rounded'));
 					}
 				});
-				const isDarkMode = document.documentElement.classList.contains('dark');
 
 				const logo = document.createElement('img');
 				logo.id = 'logo';
 				logo.style =
-					'position: absolute; width: auto; height: 6rem; top: 44%; left: 50%; transform: translateX(-50%); display:block;';
+					'position: absolute; width: min(30rem, 80vw); height: auto; top: 30%; left: 50%; transform: translateX(-50%); display:block;';
 				logo.loading = 'eager';
 				logo.fetchPriority = 'high';
-				// LICENSE covers this Open WebUI splash logo.
-				// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-				// https://docs.openwebui.com/license.
-				logo.src = isDarkMode ? '/static/splash-dark.png' : '/static/splash.png';
+				logo.src = preloadHref;
 
 				document.addEventListener('DOMContentLoaded', function () {
 					const splash = document.getElementById('splash-screen');
@@ -217,6 +221,10 @@
 
 		html.dark #splash-screen {
 			background: #000;
+		}
+
+		html.karix #splash-screen {
+			background: #081846;
 		}
 
 		html.her #splash-screen {

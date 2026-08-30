@@ -93,7 +93,7 @@
 		Do not alter, remove, obscure, or replace it except as LICENSE permits:
 		https://docs.openwebui.com/license. -->
 		<img
-			src={image || `${WEBUI_BASE_URL}/static/favicon.png`}
+			src={image || `${WEBUI_BASE_URL}/static/karix-icons/light-circle.svg`}
 			class="rounded-full size-8 object-cover flex-shrink-0"
 			alt=""
 		/>
@@ -130,7 +130,7 @@
 					Do not alter, remove, obscure, or replace it except as LICENSE permits:
 					https://docs.openwebui.com/license. -->
 					<img
-						src={image || `${WEBUI_BASE_URL}/static/favicon.png`}
+						src={image || `${WEBUI_BASE_URL}/static/karix-icons/light-circle.svg`}
 						class="size-8 object-cover"
 						alt=""
 					/>

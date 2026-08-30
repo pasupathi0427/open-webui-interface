@@ -2084,7 +2084,7 @@ DEFAULT_ARENA_MODEL = {
         # LICENSE covers this Open WebUI fallback logo.
         # Do not alter, remove, obscure, or replace it except as LICENSE permits:
         # https://docs.openwebui.com/license.
-        'profile_image_url': '/favicon.png',
+        'profile_image_url': '/static/karix-icons/light-circle.svg',
         'description': 'Submit your questions to anonymous AI chatbots and vote on the best response.',
         'model_ids': None,
     },

@@ -1,17 +1,17 @@
 {
-  "name": "Open WebUI",
-  "short_name": "WebUI",
+  "name": "Karix",
+  "short_name": "Karix",
   "icons": [
     {
-      "src": "/static/web-app-manifest-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/static/karix-icons/light-rounded.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     },
     {
-      "src": "/static/web-app-manifest-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/static/karix-icons/light-rounded.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],

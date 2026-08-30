@@ -143,7 +143,7 @@
 			<ProfileImage
 				src={user?.id
 					? `${WEBUI_API_BASE_URL}/users/${user.id}/profile/image`
-					: `${WEBUI_BASE_URL}/static/favicon.png`}
+					: `${WEBUI_BASE_URL}/static/karix-icons/light-circle.svg`}
 				className={'size-7 user-message-profile-image'}
 			/>
 		</div>

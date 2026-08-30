@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { marked } from 'marked';
 
 	import { getContext, tick } from 'svelte';
@@ -85,7 +86,7 @@
 			<div class="flex items-center min-w-fit">
 				<Tooltip content={$user?.role === 'admin' ? (item?.value ?? '') : ''} placement="top-start">
 					<img
-						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}`}
+						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
 						alt={$i18n.t('{{modelName}} profile image', { modelName: item.label })}
 						class="flex size-4 items-center rounded-full"
 						loading="lazy"
@@ -93,7 +94,7 @@
 							// LICENSE covers this Open WebUI fallback logo.
 							// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 							// https://docs.openwebui.com/license.
-							e.currentTarget.src = '/favicon.png';
+							e.currentTarget.src = $brandLogoCircle;
 						}}
 					/>
 				</Tooltip>

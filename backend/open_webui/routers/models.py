@@ -643,9 +643,12 @@ async def get_model_by_id(id: str, user=Depends(get_verified_user), db: AsyncSes
 async def get_model_profile_image(
     request: Request,
     id: str,
+    theme: str = 'light',
     user=Depends(get_verified_user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    brand_variant = theme if theme in {'light', 'karix', 'black'} else 'light'
+    default_brand_image = f'/static/karix-icons/{brand_variant}-circle.svg'
     profile_image_url = None
     updated_at = None
 
@@ -686,7 +689,7 @@ async def get_model_profile_image(
                     # Do not alter, remove, obscure, or replace it except as LICENSE permits:
                     # https://docs.openwebui.com/license.
                     return RedirectResponse(
-                        url='/static/favicon.png',
+                        url=default_brand_image,
                         status_code=status.HTTP_302_FOUND,
                     )
 
@@ -707,6 +710,12 @@ async def get_model_profile_image(
         else:
             safe_static = _safe_static_redirect_path(profile_image_url)
             if safe_static:
+                if safe_static in {
+                    '/favicon.png',
+                    '/static/favicon.png',
+                    '/static/karix-icons/light-circle.svg',
+                }:
+                    safe_static = default_brand_image
                 return RedirectResponse(
                     url=safe_static,
                     status_code=status.HTTP_302_FOUND,
@@ -716,7 +725,7 @@ async def get_model_profile_image(
     # Do not alter, remove, obscure, or replace it except as LICENSE permits:
     # https://docs.openwebui.com/license.
     return RedirectResponse(
-        url='/static/favicon.png',
+        url=default_brand_image,
         status_code=status.HTTP_302_FOUND,
     )
 

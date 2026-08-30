@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { getContext } from 'svelte';
 	import { adminLeaderboardCount, models } from '$lib/stores';
 	import { getLeaderboard } from '$lib/apis/evaluations';
@@ -210,14 +211,14 @@
 							<td class="px-3 py-1.5">
 								<div class="flex items-center gap-2">
 									<img
-										src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.id}"
+										src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.id}&theme={$brandVariant}"
 										alt={model.name}
 										class="size-5 rounded-full object-cover shrink-0"
 										on:error={(e) => {
 											// LICENSE covers this Open WebUI fallback logo.
 											// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 											// https://docs.openwebui.com/license.
-											e.target.src = '/favicon.png';
+											e.target.src = $brandLogoCircle;
 										}}
 									/>
 									<Tooltip content={`${model.name} (${model.id})`} placement="top-start">

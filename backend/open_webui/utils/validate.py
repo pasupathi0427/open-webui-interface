@@ -26,6 +26,12 @@ _SAFE_STATIC_PATHS = frozenset(
         '/user.png',
         '/favicon.png',
         '/static/favicon.png',
+        '/static/karix-icons/light-circle.svg',
+        '/static/karix-icons/light-rounded.svg',
+        '/static/karix-icons/karix-circle.svg',
+        '/static/karix-icons/karix-rounded.svg',
+        '/static/karix-icons/black-circle.svg',
+        '/static/karix-icons/black-rounded.svg',
     }
 )
 

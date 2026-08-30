@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { onMount, getContext } from 'svelte';
 	import { models } from '$lib/stores';
 	import {
@@ -480,14 +481,14 @@
 								<td class="px-3 py-1 font-normal text-gray-900 dark:text-white">
 									<div class="flex items-center gap-2">
 										<img
-											src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.model_id}"
+											src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.model_id}&theme={$brandVariant}"
 											alt={model.name}
 											class="size-5 rounded-full object-cover shrink-0"
 											on:error={(e) => {
 												// LICENSE covers this Open WebUI fallback logo.
 												// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 												// https://docs.openwebui.com/license.
-												e.target.src = '/favicon.png';
+												e.target.src = $brandLogoCircle;
 											}}
 										/>
 										<span class="truncate max-w-[9.375rem]">{model.name}</span>

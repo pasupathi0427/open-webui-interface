@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { marked } from 'marked';
 	import Sortable from 'sortablejs';
 	import fileSaver from 'file-saver';
@@ -957,7 +958,7 @@
 													: 'opacity-50 dark:opacity-50'} bg-transparent rounded-xl"
 											>
 												<img
-													src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+													src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
 													alt="modelfile profile"
 													class=" rounded-xl size-7 object-cover"
 													loading="lazy"
@@ -966,7 +967,7 @@
 														// LICENSE covers this Open WebUI fallback logo.
 														// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 														// https://docs.openwebui.com/license.
-														e.target.src = '/favicon.png';
+														e.target.src = $brandLogoCircle;
 													}}
 												/>
 											</div>

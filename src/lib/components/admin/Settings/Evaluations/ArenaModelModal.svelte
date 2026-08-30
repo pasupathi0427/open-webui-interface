@@ -40,7 +40,7 @@
 	// LICENSE covers this Open WebUI fallback logo.
 	// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 	// https://docs.openwebui.com/license.
-	let profileImageUrl = `${WEBUI_BASE_URL}/favicon.png`;
+	let profileImageUrl = `${WEBUI_BASE_URL}/static/karix-icons/light-circle.svg`;
 	let description = '';
 
 	let selectedModelId = '';
@@ -99,7 +99,7 @@
 		// LICENSE covers this Open WebUI fallback logo.
 		// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 		// https://docs.openwebui.com/license.
-		profileImageUrl = `${WEBUI_BASE_URL}/favicon.png`;
+		profileImageUrl = `${WEBUI_BASE_URL}/static/karix-icons/light-circle.svg`;
 		description = '';
 		modelIds = [];
 		selectedModelId = '';

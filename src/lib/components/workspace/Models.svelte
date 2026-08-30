@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import { toast } from 'svelte-sonner';
@@ -713,7 +714,7 @@
 								<div class="mr-1 shrink-0 self-center">
 									<div class="{model.is_active ? '' : 'opacity-50 dark:opacity-50'} bg-transparent">
 										<img
-											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
 											alt=""
 											class="size-7 rounded-lg object-cover"
 											loading="lazy"
@@ -722,7 +723,7 @@
 												// LICENSE covers this Open WebUI fallback logo.
 												// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 												// https://docs.openwebui.com/license.
-												e.target.src = '/favicon.png';
+												e.target.src = $brandLogoCircle;
 											}}
 										/>
 									</div>

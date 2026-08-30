@@ -1831,7 +1831,7 @@ async def get_webhook_profile_image(webhook_id: str, user=Depends(get_verified_u
         # LICENSE covers this Open WebUI fallback logo.
         # Do not alter, remove, obscure, or replace it except as LICENSE permits:
         # https://docs.openwebui.com/license.
-        return FileResponse(f'{STATIC_DIR}/favicon.png')
+        return FileResponse(f'{STATIC_DIR}/karix-icons/light-circle.svg')
 
     if webhook.profile_image_url:
         # Check if it's url or base64
@@ -1859,7 +1859,7 @@ async def get_webhook_profile_image(webhook_id: str, user=Depends(get_verified_u
     # LICENSE covers this Open WebUI fallback logo.
     # Do not alter, remove, obscure, or replace it except as LICENSE permits:
     # https://docs.openwebui.com/license.
-    return FileResponse(f'{STATIC_DIR}/favicon.png')
+    return FileResponse(f'{STATIC_DIR}/karix-icons/light-circle.svg')
 
 
 @router.get('/{id}/webhooks', response_model=list[ChannelWebhookModel])

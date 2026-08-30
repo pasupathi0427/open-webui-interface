@@ -1,4 +1,5 @@
 <script>
+	import { brandLogoRounded } from '$lib/stores';
 	import { io } from 'socket.io-client';
 	import { spring } from 'svelte/motion';
 	import { createPyodideWorker } from '$lib/pyodide/createPyodideWorker';
@@ -608,7 +609,7 @@
 						// LICENSE covers this Open WebUI notification identifier.
 						// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 						// https://docs.openwebui.com/license.
-						icon: `${WEBUI_BASE_URL}/static/favicon.png`
+						icon: $brandLogoRounded
 					});
 				}
 			}
@@ -746,7 +747,7 @@
 								// LICENSE covers this Open WebUI notification identifier.
 								// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 								// https://docs.openwebui.com/license.
-								icon: `${WEBUI_BASE_URL}/static/favicon.png`
+								icon: $brandLogoRounded
 							});
 						}
 					}
@@ -1372,6 +1373,13 @@
 		);
 	}
 
+	$: if (typeof document !== 'undefined' && $brandLogoRounded) {
+		document.querySelector('#app-favicon')?.setAttribute('href', $brandLogoRounded);
+		document
+			.querySelector('link[rel="apple-touch-icon"]')
+			?.setAttribute('href', $brandLogoRounded);
+	}
+
 	onDestroy(() => {
 		bc.close();
 	});
@@ -1383,8 +1391,6 @@
 	Do not alter, remove, obscure, or replace it except as LICENSE permits:
 	https://docs.openwebui.com/license. -->
 	<title>{$WEBUI_NAME}</title>
-	<link crossorigin="anonymous" rel="icon" href="{WEBUI_BASE_URL}/static/favicon.png" />
-
 	<meta name="apple-mobile-web-app-title" content={$WEBUI_NAME} />
 	<meta name="description" content={$WEBUI_NAME} />
 	<link

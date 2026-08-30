@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandVariant } from '$lib/stores';
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 	import { Handle, Position, type NodeProps } from '@xyflow/svelte';
 	import { getContext } from 'svelte';
@@ -50,7 +51,7 @@
 		{:else}
 			<div class="flex w-full">
 				<ProfileImage
-					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${data.model?.id ?? data.message.model}&lang=${$i18n.language}`}
+					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${data.model?.id ?? data.message.model}&lang=${$i18n.language}&theme=${$brandVariant}`}
 					className={'size-5 -translate-y-[1px] flex-shrink-0'}
 				/>
 

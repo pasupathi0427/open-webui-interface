@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandVariant } from '$lib/stores';
 	import { getContext, createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 	const i18n = getContext('i18n');
@@ -28,7 +29,7 @@
 		<div class="flex flex-col flex-1">
 			<div class="flex gap-2.5 items-center">
 				<img
-					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}`}
+					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&theme=${$brandVariant}`}
 					alt={model.name}
 					class="size-8 rounded-full object-cover shrink-0"
 				/>

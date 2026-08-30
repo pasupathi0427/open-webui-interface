@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import Fuse from 'fuse.js';
 
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
@@ -84,14 +85,14 @@
 			>
 				<div class="flex min-w-0 items-center text-black dark:text-gray-100">
 					<img
-						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
 						alt={model?.name ?? model.id}
 						class="mr-2 size-4.5 rounded-full object-cover"
 						on:error={(e) => {
 							// LICENSE covers this Open WebUI fallback logo.
 							// Do not alter, remove, obscure, or replace it except as LICENSE permits:
 							// https://docs.openwebui.com/license.
-							e.currentTarget.src = '/favicon.png';
+							e.currentTarget.src = $brandLogoCircle;
 						}}
 					/>
 					<div class="min-w-0 truncate">

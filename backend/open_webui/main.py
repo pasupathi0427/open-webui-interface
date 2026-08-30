@@ -2863,15 +2863,15 @@ async def get_manifest_json():
                 # Do not alter, remove, obscure, or replace it except as LICENSE permits:
                 # https://docs.openwebui.com/license.
                 {
-                    'src': '/static/logo.png',
-                    'type': 'image/png',
-                    'sizes': '500x500',
+                    'src': '/static/karix-icons/light-rounded.svg',
+                    'type': 'image/svg+xml',
+                    'sizes': 'any',
                     'purpose': 'any',
                 },
                 {
-                    'src': '/static/logo.png',
-                    'type': 'image/png',
-                    'sizes': '500x500',
+                    'src': '/static/karix-icons/light-rounded.svg',
+                    'type': 'image/svg+xml',
+                    'sizes': 'any',
                     'purpose': 'maskable',
                 },
             ],
@@ -2894,7 +2894,7 @@ async def get_opensearch_xml():
     <ShortName>{app.state.WEBUI_NAME}</ShortName>
     <Description>Search {app.state.WEBUI_NAME}</Description>
     <InputEncoding>UTF-8</InputEncoding>
-    <Image width="16" height="16" type="image/x-icon">{webui_url}/static/favicon.png</Image>
+    <Image width="16" height="16" type="image/svg+xml">{webui_url}/static/karix-icons/light-rounded.svg</Image>
     <Url type="text/html" method="get" template="{webui_url}/?q={'{searchTerms}'}"/>
     <moz:SearchForm>{webui_url}</moz:SearchForm>
     </OpenSearchDescription>
@@ -3018,7 +3018,7 @@ def swagger_ui_html(*args, **kwargs):
         **kwargs,
         swagger_js_url='/static/swagger-ui/swagger-ui-bundle.js',
         swagger_css_url='/static/swagger-ui/swagger-ui.css',
-        swagger_favicon_url='/static/swagger-ui/favicon.png',
+        swagger_favicon_url='/static/karix-icons/light-rounded.svg',
     )
 
 
