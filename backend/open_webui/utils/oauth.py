@@ -33,6 +33,7 @@ from mcp.shared.auth import (
 )
 from open_webui.config import (
     DEFAULT_USER_ROLE,
+    ENABLE_MICROSOFT_GRAPH_GROUP_CLAIM,
     ENABLE_OAUTH,
     ENABLE_OAUTH_GROUP_CREATION,
     ENABLE_OAUTH_GROUP_MANAGEMENT,
@@ -1777,6 +1778,37 @@ class OAuthManager:
                     db=db,
                 )
 
+    async def _add_microsoft_graph_group_claim(self, user_data, access_token, claim):
+        if not access_token:
+            log.warning('Microsoft Graph group claim is enabled, but the access token is missing')
+            return
+        if not claim or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', claim):
+            log.warning('Microsoft Graph group claim must be a single user property; got %r', claim)
+            return
+
+        try:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+                async with session.get(
+                    'https://graph.microsoft.com/v1.0/me',
+                    headers={'Authorization': f'Bearer {access_token}'},
+                    params={'$select': claim},
+                    ssl=AIOHTTP_CLIENT_SESSION_SSL,
+                ) as resp:
+                    if not resp.ok:
+                        log.warning('Microsoft Graph profile request failed with status %s', resp.status)
+                        return
+                    value = (await resp.json()).get(claim)
+        except Exception as e:
+            log.warning('Microsoft Graph profile request failed: %s', e)
+            return
+
+        if isinstance(value, (str, list)) and value:
+            user_data[claim] = value
+            log.info('Loaded OAuth group claim %r from Microsoft Graph', claim)
+        else:
+            log.warning('Microsoft Graph profile has no usable value for group claim %r', claim)
+
     async def _process_picture_url(self, picture_url: str, access_token: str = None) -> str:
         """Process a picture URL and return a base64 encoded data URL.
 
@@ -1919,6 +1951,17 @@ class OAuthManager:
             if not user_data:
                 log.warning(f'OAuth callback failed, user data is missing: {token}')
                 raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+
+            if (
+                provider == 'microsoft'
+                and ENABLE_MICROSOFT_GRAPH_GROUP_CLAIM
+                and auth_config.ENABLE_OAUTH_GROUP_MANAGEMENT
+            ):
+                await self._add_microsoft_graph_group_claim(
+                    user_data,
+                    token.get('access_token'),
+                    auth_config.OAUTH_GROUPS_CLAIM,
+                )
 
             # Extract the "sub" claim, using custom claim if configured
             if auth_config.OAUTH_SUB_CLAIM:
