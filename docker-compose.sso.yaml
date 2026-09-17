@@ -27,7 +27,7 @@ services:
       - ENABLE_OAUTH_PERSISTENT_CONFIG=true
       - ENABLE_OAUTH_GROUP_MANAGEMENT=true
       - ENABLE_OAUTH_GROUP_CREATION=true
-      - OAUTH_GROUP_CLAIM=jobTitle
+      - OAUTH_GROUP_CLAIM=department
       - OAUTH_GROUP_DEFAULT_SHARE=members
     extra_hosts:
       - host.docker.internal:host-gateway

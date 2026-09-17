@@ -19,7 +19,7 @@ CLAUDE.md
 # C extensions
 *.so
 .serena/
-
+graphify-out/
 # Pyodide distribution
 static/pyodide/*
 !static/pyodide/pyodide-lock.json

@@ -49,6 +49,47 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 
+class RagflowModelSyncForm(BaseModel):
+    model_id: str
+    assistant_id: str
+    owner_id: str
+    name: str
+    knowledge_ids: list[str]
+    llm_id: str | None = None
+    is_active: bool = True
+
+
+@router.post('/ragflow/sync', response_model=ModelModel)
+async def sync_ragflow_model(
+    form: RagflowModelSyncForm,
+    user=Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    """Idempotent, private model projection; owner is not the integration admin."""
+    from open_webui.models.users import Users
+    from open_webui.models.knowledge import Knowledges
+    if not form.model_id.startswith('owrf-') or not await Users.get_user_by_id(form.owner_id, db=db):
+        raise HTTPException(400, 'Invalid shadow identity')
+    for kb_id in form.knowledge_ids:
+        if not await Knowledges.get_knowledge_by_id(kb_id, db=db):
+            raise HTTPException(409, 'Dataset shadow is not ready')
+    existing = await Models.get_model_by_id(form.model_id, db=db)
+    if existing and (existing.user_id != form.owner_id
+                     or (existing.meta.model_dump().get('ragflow_assistant_id') != form.assistant_id)):
+        raise HTTPException(409, 'Model ID already belongs to another resource')
+    desired = ModelForm(id=form.model_id, base_model_id=form.model_id, name=form.name,
+        meta=ModelMeta(managed_by='ow-ragflow-sync', origin='ragflow',
+            ragflow_assistant_id=form.assistant_id, ragflow_llm_id=form.llm_id,
+            knowledge=[{'id': kb, 'type': 'collection'} for kb in form.knowledge_ids]),
+        params=ModelParams(), access_grants=[], is_active=form.is_active)
+    result = (await Models.update_model_by_id(form.model_id, desired, db=db) if existing
+              else await Models.insert_new_model(desired, form.owner_id, db=db))
+    if result is None:
+        # A concurrent insert or lost response is recovered on the next identical request.
+        raise HTTPException(409, 'Model projection must be retried')
+    return result
+
+
 def add_chat_variables_schema(model_dict: dict) -> dict:
     system = (model_dict.get('params') or {}).get('system') if isinstance(model_dict.get('params'), dict) else None
     schema = get_chat_variables_schema(system)

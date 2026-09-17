@@ -457,10 +457,12 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             log.warning(f'License data retrieval failed during startup: {e}')
 
-    app.state.startup_complete = True
-    await publish_event(app, EVENTS.SYSTEM_STARTUP_COMPLETED, source='system')
+    from open_webui.transactional_sync import lifespan as sync_lifespan
 
-    yield
+    async with sync_lifespan():
+        app.state.startup_complete = True
+        await publish_event(app, EVENTS.SYSTEM_STARTUP_COMPLETED, source='system')
+        yield
 
     await publish_event(app, EVENTS.SYSTEM_SHUTDOWN_STARTED, source='system')
 

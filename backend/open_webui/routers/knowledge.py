@@ -63,6 +63,39 @@ log = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+class RagflowKnowledgeProjection(BaseModel):
+    id: str
+    owner_id: str
+    dataset_id: str
+    name: str
+    description: str
+
+
+@router.post('/ragflow/sync', response_model=KnowledgeResponse)
+async def sync_ragflow_knowledge(form: RagflowKnowledgeProjection,
+    user=Depends(get_admin_user), db: AsyncSession = Depends(get_async_session)):
+    from open_webui.models.knowledge import Knowledge
+    from open_webui.models.users import Users
+    try:
+        uuid.UUID(form.id)
+    except ValueError:
+        raise HTTPException(400, 'Invalid shadow ID')
+    if not await Users.get_user_by_id(form.owner_id, db=db):
+        raise HTTPException(409, 'Shadow owner is not available')
+    row = await db.get(Knowledge, form.id)
+    if row is not None and (row.user_id != form.owner_id
+                           or (row.meta or {}).get('ragflow_dataset_id') != form.dataset_id):
+        raise HTTPException(409, 'Knowledge ID belongs to another resource')
+    if row is None:
+        row = Knowledge(id=form.id, user_id=form.owner_id, created_at=int(time.time()),
+                        meta={'managed_by': 'ow-ragflow-sync', 'ragflow_dataset_id': form.dataset_id})
+        db.add(row)
+    row.name, row.description = form.name, form.description
+    row.updated_at = int(time.time())
+    await db.commit()
+    return await Knowledges.get_knowledge_by_id(form.id, db=db)
+
 ############################
 # getKnowledgeBases
 ############################
