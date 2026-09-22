@@ -6,7 +6,7 @@
 	const { saveAs } = fileSaver;
 
 	import { onMount, onDestroy, getContext, tick } from 'svelte';
-	const i18n = getContext('i18n');
+	const i18n: any = getContext('i18n');
 
 	import {
 		config,
@@ -19,9 +19,9 @@
 	import {
 		createNewModel,
 		deleteAllModels,
-		getBaseModelTags,
-		getBaseModels,
+		getAllModels,
 		getModelById,
+		exportModels,
 		toggleModelById,
 		updateModelById,
 		updateModelAccessGrants,
@@ -89,7 +89,7 @@
 	let defaultModelIdSet = new Set<string>();
 	let defaultPinnedModelIdSet = new Set<string>();
 
-	let baseModels: ModelListItem[] = [];
+	let savedModels: ModelListItem[] = [];
 	let allModels: ModelListItem[] = [];
 
 	let filteredModels = [];
@@ -103,7 +103,7 @@
 	let modelDefaultsPanel = null;
 	let modelDefaultsDirty = false;
 
-	let viewOption = ''; // '' = All, 'enabled', 'disabled', 'visible', 'hidden'
+	let viewOption = '';
 	let tags: string[] = [];
 	let selectedTag = '';
 
@@ -122,6 +122,10 @@
 
 	const isPresetModel = (model: any) =>
 		!!(model?.preset || model?.base_model_id || model?.info?.base_model_id);
+	const modelTags = (model: any): string[] =>
+		(model?.meta?.tags ?? [])
+			.map((tag) => (typeof tag === 'string' ? tag : tag?.name))
+			.filter(Boolean);
 
 	const modelAccessLabel = (model) => {
 		if (isPublicModel(model)) {
@@ -152,6 +156,8 @@
 		filteredModels = models
 			.filter((m) => searchValue === '' || m.name.toLowerCase().includes(searchValue.toLowerCase()))
 			.filter((m) => {
+				if (viewOption === 'base') return !isPresetModel(m);
+				if (viewOption === 'workspace') return isPresetModel(m);
 				if (viewOption === 'enabled') return m?.is_active ?? true;
 				if (viewOption === 'disabled') return !(m?.is_active ?? true);
 				if (viewOption === 'visible') return !(m?.meta?.hidden ?? false);
@@ -246,7 +252,14 @@
 	};
 
 	const downloadModels = async (models) => {
-		models = await Promise.all(models.map(getFullModel));
+		try {
+			const exported = [];
+			for (const model of models) exported.push(await getPortableModel(model));
+			models = exported;
+		} catch (error: any) {
+			toast.error(`${error?.detail ?? error}`);
+			return;
+		}
 		let blob = new Blob([JSON.stringify(models)], {
 			type: 'application/json'
 		});
@@ -263,12 +276,12 @@
 			.split(',')
 			.filter((id) => id);
 
-		tags = await getBaseModelTags(localStorage.token);
+		savedModels = await getAllModels(localStorage.token);
+		tags = [...new Set(savedModels.flatMap(modelTags))].sort();
 		if (selectedTag && !tags.includes(selectedTag)) {
 			selectedTag = '';
 		}
 
-		baseModels = await getBaseModels(localStorage.token, selectedTag);
 		allModels = await getModels(localStorage.token);
 
 		const providerModels = await getModels(localStorage.token, null, true);
@@ -277,18 +290,17 @@
 			...allModels,
 			...providerModels.filter((model: ModelListItem) => !allModelIds.has(model.id))
 		];
-
-		const baseModelIds = new Set<string>(baseModels.map((model: ModelListItem) => model.id));
+		const listedModelIds = new Set(allModels.map((model) => model.id));
+		allModels.push(...savedModels.filter((model) => !listedModelIds.has(model.id)));
 
 		models = allModels
-			.filter((m: ModelListItem) => !selectedTag || baseModelIds.has(m.id))
 			.map((m: ModelListItem) => {
-				const baseModel = baseModels.find((model: ModelListItem) => model.id === m.id);
+				const savedModel = savedModels.find((model: ModelListItem) => model.id === m.id);
 
-				if (baseModel) {
+				if (savedModel) {
 					return {
 						...m,
-						...baseModel
+						...savedModel
 					};
 				} else {
 					return {
@@ -299,7 +311,8 @@
 						is_active: true
 					};
 				}
-			});
+			})
+			.filter((model) => !selectedTag || modelTags(model).includes(selectedTag));
 
 		modelOrderList = [
 			...modelOrderList.filter((id) => models.some((model) => model.id === id)),
@@ -469,7 +482,7 @@
 	const upsertModelHandler = async (model, overrides = {}, showToast = true) => {
 		model = { ...model, ...(isPresetModel(model) ? {} : { base_model_id: null }), ...overrides };
 
-		if (baseModels.find((m: ModelListItem) => m.id === model.id) || isPresetModel(model)) {
+		if (savedModels.find((m: ModelListItem) => m.id === model.id) || isPresetModel(model)) {
 			const res = await updateModelById(localStorage.token, model.id, model).catch((error) => {
 				return null;
 			});
@@ -477,6 +490,7 @@
 			if (res && showToast) {
 				toast.success($i18n.t('Model updated successfully'));
 			}
+			return !!res;
 		} else {
 			const res = await createNewModel(localStorage.token, {
 				meta: {},
@@ -492,8 +506,9 @@
 
 			if (res && showToast) {
 				toast.success($i18n.t('Model updated successfully'));
-				await init();
+				await init().catch((error) => toast.error(`${error}`));
 			}
+			return !!res;
 		}
 	};
 
@@ -601,9 +616,14 @@
 	};
 
 	const getFullModel = async (model: any) =>
-		baseModels.some((baseModel) => baseModel.id === model.id) || isPresetModel(model)
+		savedModels.some((savedModel) => savedModel.id === model.id) || isPresetModel(model)
 			? ((await getModelById(localStorage.token, model.id).catch(() => null)) ?? model)
 			: model;
+
+	const getPortableModel = async (model: any) =>
+		isPresetModel(model)
+			? (await exportModels(localStorage.token, [model.id]))[0]
+			: getFullModel(model);
 
 	const openModelHandler = async (model: any) => {
 		if (isPresetModel(model)) {
@@ -619,7 +639,7 @@
 		model = await getFullModel(model);
 		sessionStorage.model = JSON.stringify({
 			...model,
-			base_model_id: model.id,
+			...(isPresetModel(model) ? {} : { base_model_id: model.id }),
 			id: `${model.id}-clone`,
 			name: `${model.name} (Clone)`
 		});
@@ -628,7 +648,12 @@
 	};
 
 	const exportModelHandler = async (model) => {
-		model = await getFullModel(model);
+		try {
+			model = await getPortableModel(model);
+		} catch (error: any) {
+			toast.error(`${error?.detail ?? error}`);
+			return;
+		}
 		let blob = new Blob([JSON.stringify([model])], {
 			type: 'application/json'
 		});
@@ -642,7 +667,7 @@
 				? $pinnedModels.filter((id) => id !== modelId)
 				: [...$pinnedModels, modelId]
 		});
-		await updateUserSettings(localStorage.token, { ui: $settings });
+		await updateUserSettings(localStorage.token, { ui: { pinnedModels: $settings.pinnedModels } });
 	};
 
 	onMount(async () => {
@@ -702,7 +727,7 @@
 		<div class="flex h-full min-h-0 flex-col text-sm">
 			<div class="mb-2 flex items-center justify-between">
 				<h2 class="text-sm font-medium text-gray-900 dark:text-white">
-					{$i18n.t('Models')}
+					{$i18n.t('settings.admin.models.title')}
 					<span class="ml-2 font-normal text-gray-500 dark:text-gray-500">
 						{filteredModels.length}
 					</span>
@@ -831,7 +856,9 @@
 											}}
 										>
 											<DocumentArrowUp className="size-3.5" />
-											<div class="flex items-center">{$i18n.t('Import')}</div>
+											<div class="flex items-center">
+												{$i18n.t('settings.admin.models.importModels.label')}
+											</div>
 										</button>
 
 										<button
@@ -842,7 +869,9 @@
 											}}
 										>
 											<Download className="size-3.5" />
-											<div class="flex items-center">{$i18n.t('Export')}</div>
+											<div class="flex items-center">
+												{$i18n.t('settings.admin.models.exportModels.label')}
+											</div>
 										</button>
 									{/if}
 
@@ -854,7 +883,9 @@
 										}}
 									>
 										<Wrench className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Manage')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.manageModels.label')}
+										</div>
 									</button>
 
 									<button
@@ -865,7 +896,9 @@
 										}}
 									>
 										<GarbageBin className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Reset')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.resetModels.label')}
+										</div>
 									</button>
 
 									<hr class="mx-1 my-0.5 border-gray-100 dark:border-gray-800" />
@@ -878,7 +911,9 @@
 										}}
 									>
 										<CheckCircle className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Enable All')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.enableAllModels.label')}
+										</div>
 									</button>
 
 									<button
@@ -889,7 +924,9 @@
 										}}
 									>
 										<Minus className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Disable All')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.disableAllModels.label')}
+										</div>
 									</button>
 
 									<hr class="mx-1 my-0.5 border-gray-100 dark:border-gray-800" />
@@ -902,7 +939,9 @@
 										}}
 									>
 										<Eye className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Show All')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.showAllModels.label')}
+										</div>
 									</button>
 
 									<button
@@ -913,7 +952,9 @@
 										}}
 									>
 										<EyeSlash className="size-3.5" />
-										<div class="flex items-center">{$i18n.t('Hide All')}</div>
+										<div class="flex items-center">
+											{$i18n.t('settings.admin.models.hideAllModels.label')}
+										</div>
 									</button>
 								</DropdownMenu>
 							</div>
@@ -967,7 +1008,7 @@
 											>
 												<img
 													src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}&theme=${$brandVariant}`}
-													alt="modelfile profile"
+													alt={$i18n.t('modelfile profile')}
 													class=" rounded-xl size-7 object-cover"
 													loading="lazy"
 													decoding="async"
@@ -1245,9 +1286,13 @@
 			preset={false}
 			onSubmit={async (model) => {
 				console.log(model);
-				await upsertModelHandler(model);
+				if (!(await upsertModelHandler(model))) {
+					toast.error($i18n.t('Failed to save model'));
+					return false;
+				}
 				selectedModelId = null;
-				await init();
+				await init().catch((error) => toast.error(`${error}`));
+				return true;
 			}}
 			onBack={async () => {
 				selectedModelId = null;

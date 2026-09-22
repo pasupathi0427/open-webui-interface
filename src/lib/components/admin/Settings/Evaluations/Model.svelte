@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { brandVariant } from '$lib/stores';
+	import { resolveLocalizedResource } from '$lib/utils/localizedContent';
 	import { getContext, createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 	const i18n = getContext('i18n');
@@ -8,6 +9,7 @@
 	import ArenaModelModal from './ArenaModelModal.svelte';
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 	export let model;
+	export let onEdit = async (_model) => true;
 
 	let showModel = false;
 </script>
@@ -16,9 +18,7 @@
 	bind:show={showModel}
 	edit={true}
 	{model}
-	on:submit={async (e) => {
-		dispatch('edit', e.detail);
-	}}
+	onSubmit={onEdit}
 	on:delete={async () => {
 		dispatch('delete');
 	}}
@@ -30,14 +30,14 @@
 			<div class="flex gap-2.5 items-center">
 				<img
 					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&theme=${$brandVariant}`}
-					alt={model.name}
+					alt={resolveLocalizedResource(model, $i18n.language)}
 					class="size-8 rounded-full object-cover shrink-0"
 				/>
 
 				<div class="w-full flex flex-col">
 					<div class="flex items-center gap-1">
 						<div class=" line-clamp-1">
-							{model.name}
+							{resolveLocalizedResource(model, $i18n.language)}
 						</div>
 					</div>
 

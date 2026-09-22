@@ -538,7 +538,7 @@
 									id={renderedMessageId}
 									output={messageOutput}
 									done={message?.meta?.done ?? false}
-									editCodeBlock={false}
+									allowEmbeds={false}
 								/>
 							{:else if (message?.content ?? '').trim() === '' && message?.meta?.model_id}
 								<Skeleton />
@@ -548,7 +548,7 @@
 										id={renderedMessageId}
 										content={message.content}
 										paragraphTag="span"
-										allowEmbeds={!!message?.meta?.model_id}
+										allowEmbeds={false}
 									/>
 								</span>{#if message.created_at !== message.updated_at && (message?.meta?.model_id ?? null) === null}<span
 										class="text-gray-500 text-[0.625rem] pl-1 self-center"
@@ -596,6 +596,7 @@
 											})}
 										>
 											<button
+												{disabled}
 												class="flex items-center gap-1.5 transition rounded-xl px-2 py-1 cursor-pointer {reaction.users
 													.map((u) => u.id)
 													.includes($user?.id)
@@ -618,7 +619,7 @@
 										</Tooltip>
 									{/each}
 
-									{#if onReaction}
+									{#if onReaction && !disabled}
 										<EmojiPicker
 											onSubmit={(name) => {
 												onReaction(name);

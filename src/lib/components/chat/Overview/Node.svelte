@@ -8,6 +8,7 @@
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import Heart from '$lib/components/icons/Heart.svelte';
 	import { getOutputText } from '../Messages/structuredOutput';
+	import { resolveLocalizedModelName } from '$lib/utils/localizedContent';
 
 	const i18n = getContext('i18n');
 
@@ -18,6 +19,9 @@
 		getOutputText(nodeData?.message?.output) || nodeData?.message?.content || '';
 
 	$: messageContent = getMessageContent(data);
+	$: modelName = data?.model
+		? resolveLocalizedModelName(data.model, $i18n.language)
+		: (data?.message?.model ?? 'Assistant');
 </script>
 
 <div
@@ -58,7 +62,7 @@
 				<div class="ml-2 flex-1 min-w-0">
 					<div class=" flex justify-between items-center">
 						<div class="text-xs text-black dark:text-white font-normal line-clamp-1">
-							{data?.model?.name ?? data?.message?.model ?? 'Assistant'}
+							{modelName}
 						</div>
 
 						<button
