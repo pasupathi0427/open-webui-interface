@@ -13,6 +13,10 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/chat/SettingsModal.svelte — Appearance tab: 2 imports, group entry, tab entry, tab button, panel branch
 - src/lib/i18n/locales/en-US/translation.json — new keys only (appearance.*, accent/pattern names)
 - src/lib/components/chat/Suggestions.svelte — import + list markup replaced by `<SuggestionCards>` (Fuse filtering untouched); dead waterfall CSS removed
+- src/lib/components/layout/Sidebar.svelte — 2 imports; `brandLogoCircle` import commented out; collapsed-rail `<img>` → `<BrandMark>`; expanded header logo `<img>` + `{$WEBUI_NAME}` text → one `<BrandWordmark>` link (LICENSE comments kept)
+- src/app.html — `<title>` "Open WebUI" → "Karix"; apple-touch-icon SVG → PNG; 3 iOS/Android web-app meta tags
+- src/lib/constants.ts — `APP_NAME` 'Open WebUI' → 'Karix' (initial `WEBUI_NAME` store value)
+- backend/open_webui/main.py — `/manifest.json`: `background_color` #343541 → #ffffff, `theme_color` added, SVG maskable icon replaced by PNG 192/512 + padded maskable 512
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -89,3 +93,27 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Files deleted: none. Config added: none. DB migration: none.
 - Risk / regression notes: suggestion click still calls `onSelect({type:'prompt', data})` exactly as before; search-as-you-type filtering unchanged. ChatPlaceholder also uses Suggestions, so its `grid-cols-2` className is now unused (one svelte-check warning). Sidebar accent tint unchanged (global gray-50 override).
 - Verified: svelte-check 6998 errors (baseline 7001; 0 in new/changed custom code). Not yet verified in a browser on desktop/tablet/mobile (owner to check).
+
+## [2026-10-05] Branding — reference logos in the sidebar (owner request)
+- Author: Claude / reviewer: <owner>
+- Why: sidebar logo came from config (`brandLogoCircle` image + `WEBUI_NAME` text); owner wants the reference SVG logos, switching with the theme.
+- Files modified:
+  - src/lib/components/layout/Sidebar.svelte — see Upstream touchpoints. Header link keeps `href="/"` + `newChatHandler`, gains `aria-label={$WEBUI_NAME}` so screen readers still announce the name.
+- Files created:
+  - src/lib/components/icons/BrandWordmark.svelte — reference `KX_LOGO` (navy wordmark + gradient dot / white wordmark for dark), path data verified identical to the reference
+  - src/lib/components/icons/BrandMark.svelte — reference `KX_MARK` (navy square K / white square K for dark) for the collapsed rail
+- Behaviour: variants switch on the existing `.dark` class, so light, dark, OLED-dark, karix (`dark karix`) and system all pick the right logo with no extra state. Each instance gets unique gradient ids, so the hidden variant cannot break the visible one's gradient. Logo colours are the fixed brand identity and live in the icon components (not theme tokens; they do not follow the accent, as in the reference).
+- Not changed: favicon / PWA icons / splash (`static/static/karix-icons`, manifest), model avatars, `AppSidebar` (desktop app), and other uses of `brandLogoCircle` (model fallback images).
+- Config added: none. DB migration: none.
+- Verified: svelte-check 6998 errors / 199 warnings (unchanged; none in new files). Not yet verified in a browser.
+
+## [2026-10-05] Title, PWA icons, mobile suggestion cards (owner feedback)
+- Author: Claude / reviewer: <owner>
+- Why: (1) the tab showed "Open WebUI" while the app loaded: hard-coded `<title>` in app.html and the `APP_NAME` initial store value; the backend name already defaults to Karix (env.py `WEBUI_NAME`). (2) Suggestion cards were clipped by the page padding on phones and switched layout on viewport width rather than the space available. (3) PWA review: iOS ignores SVG `apple-touch-icon`, the only PNG icons in `static/static` were the Open WebUI "OI" mark, and the install splash background was dark grey (#343541) behind a navy logo.
+- Files modified: see Upstream touchpoints (app.html, constants.ts, main.py, Placeholder.svelte) and:
+  - src/lib/components/chat/SuggestionCards.svelte — container query (`@container (min-width: 560px)`) instead of a viewport media query: narrow = 72% snap-scroll row (reference mobile), wide = 3 columns (reference tablet/desktop). Narrow row bleeds to the screen edge via `--sc-bleed` (Placeholder sets it to its 1.25rem padding); `overscroll-behavior-x: contain`.
+- Files created:
+  - static/static/karix-icons/apple-touch-icon.png (180), icon-192.png, icon-512.png, icon-512-maskable.png (wordmark at 72% inside the maskable safe zone). Rendered from the existing `karix-icons/light-rounded.svg` with headless Chromium; opaque RGB (iOS renders transparency black).
+- Not changed: the upstream "OI" PNGs in `static/static` (unreferenced by the app shell); `backend/open_webui/static/*` is regenerated from `static/static` at startup (config.py), so its working-tree deletions are build output. The app has no service worker (upstream only unregisters old ones), so no cache/versioning impact.
+- PWA checklist (static review): manifest has name/short_name Karix, `display: standalone`, `start_url`, SVG + PNG 192/512 + maskable icons, white background/theme colour; iOS gets PNG touch icon, `apple-mobile-web-app-title`, `apple-mobile-web-app-capable`; `theme-color` meta still synced by `applyThemeAccent`.
+- Verified: `main.py` parses; svelte-check 6998 errors / 199 warnings (unchanged). Card layout rendered at 390 / 820 / 1280 px in headless Chromium from the component's real CSS + theme tokens: phone = 72% card with peek reaching the screen edge, iPad and desktop = 3 aligned columns. Not yet verified: real device install (Android / iOS), in-app browser check.

@@ -15,55 +15,66 @@
 	const THUMBS = ['chat', 'doc', 'bars'];
 </script>
 
-<div role="list" class="suggestion-cards scrollbar-none">
-	{#each prompts as prompt, idx (prompt.id || `${prompt.content}-${idx}`)}
-		<!-- svelte-ignore a11y-no-interactive-element-to-noninteractive-role -->
-		<button
-			role="listitem"
-			class="sc"
-			style="animation-delay: {idx * 60}ms"
-			on:click={() => onSelect({ type: 'prompt', data: prompt.content })}
-		>
-			<div class="sc-thumb" aria-hidden="true">
-				{#if THUMBS[idx % THUMBS.length] === 'chat'}
-					<div class="t-chat">
-						<div class="b"><i class="h"></i><i></i><i style="width:70%"></i></div>
-						<div class="b me"><i></i></div>
-					</div>
-				{:else if THUMBS[idx % THUMBS.length] === 'doc'}
-					<div class="t-doc">
-						<div class="paper">
-							<i style="width:56%"></i><i style="width:82%"></i><i style="width:68%"></i>
-							<span class="tot"><i></i><b></b></span>
+<div class="suggestion-cards-wrap">
+	<div role="list" class="suggestion-cards scrollbar-none">
+		{#each prompts as prompt, idx (prompt.id || `${prompt.content}-${idx}`)}
+			<!-- svelte-ignore a11y-no-interactive-element-to-noninteractive-role -->
+			<button
+				role="listitem"
+				class="sc"
+				style="animation-delay: {idx * 60}ms"
+				on:click={() => onSelect({ type: 'prompt', data: prompt.content })}
+			>
+				<div class="sc-thumb" aria-hidden="true">
+					{#if THUMBS[idx % THUMBS.length] === 'chat'}
+						<div class="t-chat">
+							<div class="b"><i class="h"></i><i></i><i style="width:70%"></i></div>
+							<div class="b me"><i></i></div>
 						</div>
-						<span class="stamp"><Check className="size-3.5" strokeWidth="3" /></span>
-					</div>
-				{:else}
-					<div class="t-bars">
-						{#each [42, 64, 50, 86, 58, 72] as h, k}
-							<i class:on={k === 3 || k === 5} style="height:{h}%; animation-delay:{k * 40}ms"></i>
-						{/each}
-					</div>
-				{/if}
-				<span class="sc-go"><ArrowRight className="size-3.5" strokeWidth="2.2" /></span>
-			</div>
-			<div class="sc-b">
-				<div class="sc-t">
-					{prompt.title && prompt.title[0] !== '' ? prompt.title[0] : prompt.content}
+					{:else if THUMBS[idx % THUMBS.length] === 'doc'}
+						<div class="t-doc">
+							<div class="paper">
+								<i style="width:56%"></i><i style="width:82%"></i><i style="width:68%"></i>
+								<span class="tot"><i></i><b></b></span>
+							</div>
+							<span class="stamp"><Check className="size-3.5" strokeWidth="3" /></span>
+						</div>
+					{:else}
+						<div class="t-bars">
+							{#each [42, 64, 50, 86, 58, 72] as h, k}
+								<i class:on={k === 3 || k === 5} style="height:{h}%; animation-delay:{k * 40}ms"
+								></i>
+							{/each}
+						</div>
+					{/if}
+					<span class="sc-go"><ArrowRight className="size-3.5" strokeWidth="2.2" /></span>
 				</div>
-				<div class="sc-m">
-					<span class="dot"></span>
-					<span class="sc-d">
-						{prompt.title && prompt.title[0] !== '' ? prompt.title[1] : $i18n.t('Prompt')}
-					</span>
+				<div class="sc-b">
+					<div class="sc-t">
+						{prompt.title && prompt.title[0] !== '' ? prompt.title[0] : prompt.content}
+					</div>
+					<div class="sc-m">
+						<span class="dot"></span>
+						<span class="sc-d">
+							{prompt.title && prompt.title[0] !== '' ? prompt.title[1] : $i18n.t('Prompt')}
+						</span>
+					</div>
 				</div>
-			</div>
-		</button>
-	{/each}
+			</button>
+		{/each}
+	</div>
 </div>
 
 <style>
 	/* All colours come from theme tokens (src/lib/styles/theme-tokens.css). */
+	/* Layout follows the space the cards actually get (container query), as in the reference:
+	 * narrow (phone, or a squeezed panel) → 72%-wide cards in a snap-scrolling row with the next card peeking;
+	 * wide (tablet / desktop) → 3 equal columns. `--sc-bleed` (set by the parent to its side padding)
+	 * lets the narrow row run to the screen edge instead of being cut off by the padding. */
+	.suggestion-cards-wrap {
+		container-type: inline-size;
+		width: 100%;
+	}
 	.suggestion-cards {
 		--tc: var(--theme-accent);
 		--tcs: color-mix(in srgb, var(--tc) 11%, var(--theme-surface));
@@ -73,12 +84,18 @@
 		grid-auto-columns: 72%;
 		gap: 10px;
 		overflow-x: auto;
+		overscroll-behavior-x: contain;
 		scroll-snap-type: x mandatory;
-		padding: 2px 2px 6px;
+		margin-inline: calc(-1 * var(--sc-bleed, 0px));
+		padding: 2px var(--sc-bleed, 0px) 6px;
+		scroll-padding-inline: var(--sc-bleed, 0px);
 	}
-	@media (min-width: 640px) {
+	@container (min-width: 560px) {
 		.suggestion-cards {
 			grid-auto-columns: calc((100% - 20px) / 3);
+			margin-inline: 0;
+			padding-inline: 2px;
+			scroll-padding-inline: 2px;
 		}
 	}
 

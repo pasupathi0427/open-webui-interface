@@ -2893,7 +2893,8 @@ async def get_manifest_json():
             'description': f'{app.state.WEBUI_NAME} is an open, extensible, user-friendly interface for AI that adapts to your workflow.',
             'start_url': '/',
             'display': 'standalone',
-            'background_color': '#343541',
+            'background_color': '#ffffff',  # CUSTOM: white install splash behind the navy logo (was #343541)
+            'theme_color': '#ffffff',  # CUSTOM
             'icons': [
                 # LICENSE covers this Open WebUI install icon.
                 # Do not alter, remove, obscure, or replace it except as LICENSE permits:
@@ -2904,10 +2905,23 @@ async def get_manifest_json():
                     'sizes': 'any',
                     'purpose': 'any',
                 },
+                # CUSTOM: PNG icons for platforms that need raster sizes; padded maskable so masks don't clip
                 {
-                    'src': '/static/karix-icons/light-rounded.svg',
-                    'type': 'image/svg+xml',
-                    'sizes': 'any',
+                    'src': '/static/karix-icons/icon-192.png',
+                    'type': 'image/png',
+                    'sizes': '192x192',
+                    'purpose': 'any',
+                },
+                {
+                    'src': '/static/karix-icons/icon-512.png',
+                    'type': 'image/png',
+                    'sizes': '512x512',
+                    'purpose': 'any',
+                },
+                {
+                    'src': '/static/karix-icons/icon-512-maskable.png',
+                    'type': 'image/png',
+                    'sizes': '512x512',
                     'purpose': 'maskable',
                 },
             ],

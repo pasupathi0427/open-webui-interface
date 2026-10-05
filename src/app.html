@@ -13,9 +13,11 @@
 			href="/static/karix-icons/light-rounded.svg"
 			crossorigin="use-credentials"
 		/>
+		<!-- CUSTOM: iOS ignores SVG touch icons; PNG rendered from karix-icons/light-rounded.svg -->
 		<link
 			rel="apple-touch-icon"
-			href="/static/karix-icons/light-rounded.svg"
+			sizes="180x180"
+			href="/static/karix-icons/apple-touch-icon.png"
 			crossorigin="use-credentials"
 		/>
 		<link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
@@ -24,6 +26,10 @@
 			content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
 		/>
 		<meta name="theme-color" content="#171717" />
+		<!-- CUSTOM: installed-app name and standalone mode on iOS / older Android -->
+		<meta name="apple-mobile-web-app-title" content="Karix" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="robots" content="noindex,nofollow" />
 
 		<script src="/static/loader.js" defer crossorigin="use-credentials"></script>
@@ -132,7 +138,7 @@
 			})();
 		</script>
 
-		<title>Open WebUI</title>
+		<title>Karix</title><!-- CUSTOM: was "Open WebUI"; shown until the app sets $WEBUI_NAME -->
 
 		%sveltekit.head%
 	</head>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { brandLogoCircle } from '$lib/stores';
+	// CUSTOM: brandLogoCircle import removed (sidebar logos are BrandMark / BrandWordmark)
 	import { toast } from 'svelte-sonner';
 	import { v4 as uuidv4 } from 'uuid';
 	import Sortable from 'sortablejs';
@@ -93,6 +93,8 @@
 	import CheckIcon from '../icons/Check.svelte';
 	import MoreHorizontalIcon from './Sidebar/icons/MoreHorizontal.svelte';
 	import MobileSwipePanel from '../common/MobileSwipePanel.svelte';
+	import BrandMark from '../icons/BrandMark.svelte'; // CUSTOM
+	import BrandWordmark from '../icons/BrandWordmark.svelte'; // CUSTOM
 
 	const BREAKPOINT = 768;
 	const DEFAULT_PINNED_ITEMS = ['notes', 'workspace'];
@@ -968,11 +970,10 @@
 								<!-- LICENSE covers this Open WebUI sidebar logo.
 							Do not alter, remove, obscure, or replace it except as LICENSE permits:
 							https://docs.openwebui.com/license. -->
-								<img
-									src={$brandLogoCircle}
-									class="sidebar-new-chat-icon size-5 rounded-full group-hover:hidden"
-									alt=""
-								/>
+								<!-- CUSTOM: brand mark (light/dark via .dark) instead of the env/config logo image -->
+								<span class="sidebar-new-chat-icon group-hover:hidden">
+									<BrandMark className="size-[calc(28px*var(--app-text-scale,1))] rounded-lg" />
+								</span>
 
 								<Sidebar className="size-4 hidden group-hover:flex" />
 							</div>
@@ -1145,33 +1146,22 @@
 				<div
 					class="sidebar px-1 pt-1.5 pb-1 flex justify-between space-x-1 text-gray-600 dark:text-gray-400 sticky top-0 z-10 -mb-2"
 				>
+					<!-- LICENSE covers this Open WebUI sidebar logo.
+					Do not alter, remove, obscure, or replace it except as LICENSE permits:
+					https://docs.openwebui.com/license. -->
+					<!-- LICENSE covers this Open WebUI sidebar name.
+					Do not alter, remove, obscure, or replace it except as LICENSE permits:
+					https://docs.openwebui.com/license. -->
+					<!-- CUSTOM: brand wordmark (light/dark via .dark) replaces the env/config logo + name; still opens a new chat -->
 					<a
-						class="flex items-center rounded-xl size-8.5 h-full justify-center hover:bg-gray-100 dark:hover:bg-gray-900 transition no-drag-region"
+						id="sidebar-webui-name"
+						class="sidebar-new-chat-icon flex flex-1 items-center px-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition no-drag-region"
 						href="/"
 						draggable="false"
+						aria-label={$WEBUI_NAME}
 						on:click={newChatHandler}
 					>
-						<!-- LICENSE covers this Open WebUI sidebar logo.
-					Do not alter, remove, obscure, or replace it except as LICENSE permits:
-					https://docs.openwebui.com/license. -->
-						<img
-							crossorigin="anonymous"
-							src={$brandLogoCircle}
-							class="sidebar-new-chat-icon size-5 rounded-full"
-							alt=""
-						/>
-					</a>
-
-					<a href="/" class="flex flex-1 px-0.5" on:click={newChatHandler}>
-						<!-- LICENSE covers this Open WebUI sidebar name.
-					Do not alter, remove, obscure, or replace it except as LICENSE permits:
-					https://docs.openwebui.com/license. -->
-						<div
-							id="sidebar-webui-name"
-							class=" self-center font-normal text-gray-700 dark:text-gray-200"
-						>
-							{$WEBUI_NAME}
-						</div>
+						<BrandWordmark className="h-[calc(20px*var(--app-text-scale,1))]" />
 					</a>
 					<Tooltip
 						content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
