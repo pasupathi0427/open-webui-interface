@@ -279,6 +279,9 @@ type Settings = {
 	autoFollowUps?: boolean;
 	splitLargeChunks?(body: any, splitLargeChunks: any): unknown;
 	backgroundImageUrl?: string | null;
+	// CUSTOM: per-user theme + first-login flag
+	appTheme?: { accent: string; pattern: string; strength: number };
+	hasSeenModelPicker?: boolean;
 	landingPageMode?: string;
 	iframeSandboxAllowScripts?: boolean;
 	iframeSandboxAllowForms?: boolean;

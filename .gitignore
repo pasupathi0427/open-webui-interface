@@ -19,6 +19,7 @@ CLAUDE.md
 # C extensions
 *.so
 .serena/
+.claude/
 graphify-out/
 # Pyodide distribution
 static/pyodide/*

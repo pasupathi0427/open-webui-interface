@@ -48,6 +48,17 @@ class InterfaceTitleSettings(BaseModel):
     auto: bool | None = None
 
 
+# CUSTOM: per-user theme (accent + background pattern), validated against the same ids as the frontend
+class InterfaceAppTheme(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    accent: Literal[
+        'indigo', 'purple', 'violet', 'blue', 'teal', 'mint', 'pink', 'orange', 'bronze', 'black'
+    ]
+    pattern: Literal['none', 'dots', 'grid', 'lines', 'plus', 'waves', 'contours']
+    strength: float = Field(default=0.5, ge=0.1, le=1)
+
+
 class InterfaceImageCompressionSize(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
@@ -129,6 +140,8 @@ class InterfaceSettings(BaseModel):
     fontFamily: str | None = None
     textScale: float | None = None
     title: InterfaceTitleSettings | None = None
+    appTheme: InterfaceAppTheme | None = None  # CUSTOM
+    hasSeenModelPicker: bool | None = None  # CUSTOM
     imageCompressionSize: InterfaceImageCompressionSize | None = None
     floatingActionButtons: list[InterfaceFloatingActionButton] | None = None
 

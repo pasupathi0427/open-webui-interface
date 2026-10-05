@@ -12,6 +12,7 @@
 	import { getTerminalServers } from '$lib/apis/terminal';
 	import { getUserSettings } from '$lib/apis/users';
 	import { setAppFontFamily, setTextScale } from '$lib/utils/text-scale';
+	import { applyThemeAccent, normalizeAppTheme } from '$lib/utils/themes'; // CUSTOM
 
 	import { WEBUI_VERSION, WEBUI_API_BASE_URL } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
@@ -20,6 +21,7 @@
 		config,
 		user,
 		settings,
+		theme, // CUSTOM
 		models,
 		knowledge,
 		tools,
@@ -63,6 +65,12 @@
 			});
 		}
 	};
+
+	// CUSTOM: accent follows the user's saved theme; re-applied when light/dark changes so theme-color stays in sync
+	$: applyThemeAccent(
+		$settings?.appTheme ? normalizeAppTheme($settings.appTheme).accent : null,
+		$theme
+	);
 
 	const setUserSettings = async (cb?: () => Promise<void>) => {
 		const userSettings = await getUserSettings(localStorage.token);

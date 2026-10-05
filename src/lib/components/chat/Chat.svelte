@@ -3,6 +3,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { getContext, onDestroy, onMount, tick } from 'svelte';
+	import { normalizeAppTheme, themePatternImage } from '$lib/utils/themes'; // CUSTOM
 	import { fade } from 'svelte/transition';
 	const i18n: Writable<i18nType> = getContext('i18n');
 
@@ -186,6 +187,13 @@
 			$models.find((model) => model.id === selectedModels[selectedModelIdx])?.info?.meta
 				?.background_image_url ||
 			($settings?.backgroundImageUrl ?? $config?.license_metadata?.background_image_url);
+
+	// CUSTOM: theme pattern over the existing white/dark chat surface (reference keeps the chat area untinted);
+	// only when the user picked a pattern and no image applies
+	$: appTheme = $settings?.appTheme ? normalizeAppTheme($settings.appTheme) : null;
+	$: themeBackground = !embedded && !backgroundImage && appTheme && appTheme.pattern !== 'none';
+	$: themePatternLight = themeBackground && appTheme ? themePatternImage(appTheme, false) : null;
+	$: themePatternDark = themeBackground && appTheme ? themePatternImage(appTheme, true) : null;
 
 	let atSelectedModel: Model | undefined;
 	let selectedModelIds = [];
@@ -4275,6 +4283,19 @@
 >
 	{#if !loading}
 		<div in:fade={{ duration: 50 }} class="w-full h-full flex flex-col">
+			{#if themeBackground}
+				<!-- CUSTOM: theme background -->
+				<div
+					class="pointer-events-none absolute top-0 left-0 w-full h-full dark:hidden"
+					style="background-image: {themePatternLight}"
+					aria-hidden="true"
+				></div>
+				<div
+					class="pointer-events-none absolute top-0 left-0 w-full h-full hidden dark:block"
+					style="background-image: {themePatternDark}"
+					aria-hidden="true"
+				></div>
+			{/if}
 			{#if backgroundImage}
 				<div
 					class="pointer-events-none absolute top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat"

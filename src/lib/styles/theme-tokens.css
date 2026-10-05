@@ -1,0 +1,226 @@
+/* Design tokens from .claude/ref-html/MASS-GPT Theme Tokens.html (single source of truth).
+ * Additive only: every variable is prefixed --theme-, so nothing existing is overridden.
+ * Accent is chosen with <html data-accent="…">; dark neutrals follow the existing .dark class.
+ * Derived tints use color-mix, matching the reference formulas. */
+
+:root {
+	--theme-bg: #ffffff;
+	--theme-bg-2: #f8f8fb;
+	--theme-bg-3: #f1f0f6;
+	--theme-surface: #ffffff;
+	--theme-line: #e8e7f0;
+	--theme-line-2: #d9d7e5;
+	--theme-ink: #17162c;
+	--theme-ink-2: #4a4960;
+	--theme-ink-3: #74738c;
+	--theme-ink-4: #a4a3b8;
+	--theme-on-accent: #ffffff;
+	--theme-soft-pct: 10%;
+	--theme-line-pct: 30%;
+
+	--theme-tone-rose: #c2185b;
+	--theme-tone-blue: #2358c4;
+	--theme-tone-green: #0e7a52;
+	--theme-tone-amber: #a15c00;
+	--theme-tone-violet: #6d3fd6;
+	--theme-tone-orange: #c2410c;
+
+	--theme-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--theme-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+	--theme-sh-1: 0 1px 2px rgba(23, 22, 44, 0.06);
+	--theme-sh-2: 0 8px 22px -10px rgba(23, 22, 44, 0.18), 0 1px 3px rgba(23, 22, 44, 0.05);
+	--theme-sh-3: 0 22px 50px -16px rgba(23, 22, 44, 0.3), 0 2px 6px rgba(23, 22, 44, 0.06);
+
+	/* default accent = indigo (Karix default) */
+	--theme-accent: #5b46e5;
+	--theme-accent-2: #4a36d1;
+}
+
+.dark {
+	--theme-bg: #12111c;
+	--theme-bg-2: #181725;
+	--theme-bg-3: #23222f;
+	--theme-surface: #1a1927;
+	--theme-line: #2a293a;
+	--theme-line-2: #3a394d;
+	--theme-ink: #eeedf7;
+	--theme-ink-2: #c1bfd3;
+	--theme-ink-3: #8f8da8;
+	--theme-ink-4: #66647e;
+	--theme-on-accent: #12111c;
+	--theme-soft-pct: 16%;
+	--theme-line-pct: 40%;
+
+	--theme-tone-rose: #f48fb1;
+	--theme-tone-blue: #7aa7ff;
+	--theme-tone-green: #43c993;
+	--theme-tone-amber: #f0b35a;
+	--theme-tone-violet: #b39bfa;
+	--theme-tone-orange: #ff9a62;
+
+	--theme-accent: #8c7df7;
+	--theme-accent-2: #a396fa;
+}
+
+/* derived tints: recomputed wherever --theme-accent changes */
+:root,
+.dark {
+	--theme-accent-soft: color-mix(in srgb, var(--theme-accent) var(--theme-soft-pct), var(--theme-surface));
+	--theme-accent-line: color-mix(in srgb, var(--theme-accent) var(--theme-line-pct), var(--theme-surface));
+	--theme-side: color-mix(in srgb, var(--theme-accent) 5%, var(--theme-bg-2));
+	--theme-side-hover: color-mix(in srgb, var(--theme-accent) 9%, var(--theme-bg-2));
+	--theme-side-on: color-mix(in srgb, var(--theme-accent) 15%, var(--theme-surface));
+	--theme-page: color-mix(in srgb, var(--theme-accent) 3%, var(--theme-bg-2));
+}
+
+/* accents */
+:root[data-accent="indigo"] {
+	--theme-accent: #5b46e5;
+	--theme-accent-2: #4a36d1;
+}
+:root.dark[data-accent="indigo"] {
+	--theme-accent: #8c7df7;
+	--theme-accent-2: #a396fa;
+}
+:root[data-accent="purple"] {
+	--theme-accent: #7a45d6;
+	--theme-accent-2: #6835c2;
+}
+:root.dark[data-accent="purple"] {
+	--theme-accent: #a98df2;
+	--theme-accent-2: #bba4f6;
+}
+:root[data-accent="violet"] {
+	--theme-accent: #a43bcb;
+	--theme-accent-2: #8e2db3;
+}
+:root.dark[data-accent="violet"] {
+	--theme-accent: #cc86ee;
+	--theme-accent-2: #d8a0f3;
+}
+:root[data-accent="blue"] {
+	--theme-accent: #1d6ae0;
+	--theme-accent-2: #1858c0;
+}
+:root.dark[data-accent="blue"] {
+	--theme-accent: #6aa3ff;
+	--theme-accent-2: #8ab6ff;
+}
+:root[data-accent="teal"] {
+	--theme-accent: #0c7f80;
+	--theme-accent-2: #0a6b6c;
+}
+:root.dark[data-accent="teal"] {
+	--theme-accent: #3cc4c4;
+	--theme-accent-2: #62d2d2;
+}
+:root[data-accent="mint"] {
+	--theme-accent: #0b8a5e;
+	--theme-accent-2: #08744f;
+}
+:root.dark[data-accent="mint"] {
+	--theme-accent: #45ce97;
+	--theme-accent-2: #6adaae;
+}
+:root[data-accent="pink"] {
+	--theme-accent: #d02d68;
+	--theme-accent-2: #b42358;
+}
+:root.dark[data-accent="pink"] {
+	--theme-accent: #f57ba6;
+	--theme-accent-2: #f899bb;
+}
+:root[data-accent="orange"] {
+	--theme-accent: #d4570f;
+	--theme-accent-2: #b8490b;
+}
+:root.dark[data-accent="orange"] {
+	--theme-accent: #ff9152;
+	--theme-accent-2: #ffa874;
+}
+:root[data-accent="bronze"] {
+	--theme-accent: #946247;
+	--theme-accent-2: #7e523a;
+}
+:root.dark[data-accent="bronze"] {
+	--theme-accent: #cfa284;
+	--theme-accent-2: #dab59c;
+}
+:root[data-accent="black"] {
+	--theme-accent: #1c1b26;
+	--theme-accent-2: #000000;
+}
+:root.dark[data-accent="black"] {
+	--theme-accent: #edecf6;
+	--theme-accent-2: #ffffff;
+}
+
+/* ------------------------------------------------------------------
+ * Global accent layer — same mechanism as the existing `html.karix` theme
+ * (tailwind.css): when an accent is chosen, the Tailwind gray scale becomes
+ * accent-tinted neutrals and the blue scale becomes the accent scale, so the
+ * sidebar, page, borders, hovers, links, focus rings and checkboxes all follow.
+ * `:root[data-accent]` (0,2,0) outranks `html.karix` (0,1,1) so the user's pick wins.
+ * ------------------------------------------------------------------ */
+:root[data-accent] {
+	--color-gray-50: color-mix(in srgb, var(--theme-accent) 5%, #f8f8fb);
+	--color-gray-100: color-mix(in srgb, var(--theme-accent) 8%, #f1f0f6);
+	--color-gray-200: color-mix(in srgb, var(--theme-accent) 7%, #e8e7f0);
+	--color-gray-300: color-mix(in srgb, var(--theme-accent) 7%, #d9d7e5);
+	--color-gray-400: color-mix(in srgb, var(--theme-accent) 6%, #a4a3b8);
+	--color-gray-500: color-mix(in srgb, var(--theme-accent) 6%, #8f8da8);
+	--color-gray-600: color-mix(in srgb, var(--theme-accent) 6%, #74738c);
+	--color-gray-700: color-mix(in srgb, var(--theme-accent) 6%, #4a4960);
+	--color-gray-800: color-mix(in srgb, var(--theme-accent) 6%, #2c2b42);
+	--color-gray-850: color-mix(in srgb, var(--theme-accent) 6%, #222138);
+	--color-gray-900: color-mix(in srgb, var(--theme-accent) 4%, #17162c);
+	--color-gray-950: color-mix(in srgb, var(--theme-accent) 4%, #0f0e1f);
+
+	--color-blue-50: color-mix(in srgb, var(--theme-accent) 8%, #ffffff);
+	--color-blue-100: color-mix(in srgb, var(--theme-accent) 16%, #ffffff);
+	--color-blue-200: color-mix(in srgb, var(--theme-accent) 30%, #ffffff);
+	--color-blue-300: color-mix(in srgb, var(--theme-accent) 50%, #ffffff);
+	--color-blue-400: color-mix(in srgb, var(--theme-accent) 75%, #ffffff);
+	--color-blue-500: var(--theme-accent);
+	--color-blue-600: color-mix(in srgb, var(--theme-accent) 90%, #000000);
+	--color-blue-700: color-mix(in srgb, var(--theme-accent) 78%, #000000);
+	--color-blue-800: color-mix(in srgb, var(--theme-accent) 64%, #000000);
+	--color-blue-900: color-mix(in srgb, var(--theme-accent) 50%, #000000);
+	--color-blue-950: color-mix(in srgb, var(--theme-accent) 34%, #000000);
+}
+
+/* Dark surfaces. `!important` is required because the existing theme code
+ * (Settings/General.svelte applyTheme, app.html) writes these four as inline styles. */
+:root.dark[data-accent] {
+	--color-gray-800: color-mix(in srgb, var(--theme-accent) 8%, #2a293a) !important;
+	--color-gray-850: color-mix(in srgb, var(--theme-accent) 7%, #1f1e2e) !important;
+	--color-gray-900: color-mix(in srgb, var(--theme-accent) 4%, #14131f) !important;
+	--color-gray-950: color-mix(in srgb, var(--theme-accent) 5%, #0e0d17) !important;
+}
+
+/* Primary actions: the app's "inverse" buttons (black/white) become accent buttons. */
+:root[data-accent]:not(.dark) :is(button, a):is(.bg-black, .bg-gray-900).text-white:not(:disabled) {
+	background-color: var(--theme-accent);
+	color: var(--theme-on-accent);
+}
+:root[data-accent]:not(.dark) :is(button, a):is(.bg-black, .bg-gray-900).text-white:not(:disabled):hover {
+	background-color: var(--theme-accent-2);
+}
+:root.dark[data-accent] :is(button, a).dark\:bg-white.dark\:text-black:not(:disabled) {
+	background-color: var(--theme-accent);
+	color: var(--theme-on-accent);
+}
+:root.dark[data-accent] :is(button, a).dark\:bg-white.dark\:text-black:not(:disabled):hover {
+	background-color: var(--theme-accent-2);
+}
+
+/* Switches, sliders, text selection */
+:root[data-accent] button[role='switch'][data-state='checked'] {
+	background-color: var(--theme-accent);
+}
+:root[data-accent] input[type='range'] {
+	accent-color: var(--theme-accent);
+}
+:root[data-accent] ::selection {
+	background-color: var(--theme-accent-soft);
+}

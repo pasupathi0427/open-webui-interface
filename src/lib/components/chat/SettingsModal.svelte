@@ -19,6 +19,7 @@
 	import About from './Settings/About.svelte';
 	import General from './Settings/General.svelte';
 	import Interface from './Settings/Interface.svelte';
+	import Appearance from './Settings/Appearance.svelte'; // CUSTOM
 	import Notifications from './Settings/Notifications.svelte';
 	import Shortcuts from './Settings/Shortcuts.svelte';
 	import Audio from './Settings/Audio.svelte';
@@ -39,6 +40,7 @@
 	import Face from '../icons/Face.svelte';
 	import AppNotification from '../icons/AppNotification.svelte';
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
+	import Swatch from '../icons/Swatch.svelte'; // CUSTOM
 	import ArchiveBox from '../icons/ArchiveBox.svelte';
 	import ChevronLeft from '../icons/ChevronLeft.svelte';
 	import Keyboard from '../icons/Keyboard.svelte';
@@ -142,6 +144,7 @@
 	$: personalSettingGroups = {
 		general: $i18n.t('Basics'),
 		interface: $i18n.t('Basics'),
+		appearance: $i18n.t('Basics'), // CUSTOM
 		notifications: $i18n.t('Basics'),
 		shortcuts: $i18n.t('Basics'),
 		connections: $i18n.t('Services'),
@@ -195,6 +198,13 @@
 			titleKey: 'settings.personal.interface.title',
 			title: $i18n.t('settings.personal.interface.title'),
 			searchPrefixes: ['settings.personal.interface.']
+		},
+		// CUSTOM: Appearance (accent + background pattern)
+		{
+			id: 'appearance',
+			titleKey: 'settings.personal.appearance.title',
+			title: $i18n.t('settings.personal.appearance.title'),
+			searchPrefixes: ['settings.personal.appearance.']
 		},
 		{
 			id: 'notifications',
@@ -594,6 +604,20 @@
 							<AdjustmentsHorizontal className="size-3.5" strokeWidth="2" />
 							<span>{$i18n.t('settings.personal.interface.title')}</span>
 						</button>
+					{:else if tabId === 'appearance'}
+						<!-- CUSTOM -->
+						<button
+							role="tab"
+							aria-controls="tab-appearance"
+							aria-selected={selectedTab === 'appearance'}
+							class={tabButtonClass(selectedTab === 'appearance')}
+							on:click={() => {
+								selectTab('appearance');
+							}}
+						>
+							<Swatch className="size-3.5" strokeWidth="2" />
+							<span>{$i18n.t('settings.personal.appearance.title')}</span>
+						</button>
 					{:else if tabId === 'notifications'}
 						<button
 							role="tab"
@@ -804,6 +828,8 @@
 						toast.success($i18n.t('Settings saved successfully!'));
 					}}
 				/>
+			{:else if selectedTab === 'appearance'}
+				<Appearance {saveSettings} /><!-- CUSTOM -->
 			{:else if selectedTab === 'notifications'}
 				<Notifications {saveSettings} />
 			{:else if selectedTab === 'shortcuts'}

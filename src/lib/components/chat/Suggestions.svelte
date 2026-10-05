@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Fuse from 'fuse.js';
 	import Bolt from '$lib/components/icons/Bolt.svelte';
+	import SuggestionCards from './SuggestionCards.svelte'; // CUSTOM
 	import { getContext } from 'svelte';
 	import { settings, WEBUI_NAME } from '$lib/stores';
 	import { WEBUI_VERSION } from '$lib/constants';
@@ -82,68 +83,9 @@
 	{/if}
 </div>
 
-<div class="h-36 w-full">
+<!-- CUSTOM: suggestions shown as cards (SuggestionCards); filtering above is unchanged -->
+<div class="min-h-36 w-full">
 	{#if filteredPrompts.length > 0}
-		<div role="list" class="max-h-36 overflow-auto scrollbar-none items-start {className}">
-			{#each filteredPrompts as prompt, idx (prompt.id || `${prompt.content}-${idx}`)}
-				<!-- svelte-ignore a11y-no-interactive-element-to-noninteractive-role -->
-				<button
-					role="listitem"
-					class="waterfall flex flex-col flex-1 shrink-0 w-full justify-between
-				       px-2.5 py-1.5 rounded-lg bg-transparent transition-colors
-				       hover:text-gray-950 dark:hover:text-white group"
-					style="animation-delay: {idx * 45}ms"
-					on:click={() => onSelect({ type: 'prompt', data: prompt.content })}
-				>
-					<div class="flex flex-col text-left leading-snug">
-						{#if prompt.title && prompt.title[0] !== ''}
-							<div
-								class="text-sm font-normal group-hover:text-gray-950 dark:text-gray-300 dark:group-hover:text-white transition line-clamp-1"
-							>
-								{prompt.title[0]}
-							</div>
-							<div
-								class="text-xs text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100 font-normal line-clamp-1"
-							>
-								{prompt.title[1]}
-							</div>
-						{:else}
-							<div
-								class="text-sm font-normal group-hover:text-gray-950 dark:text-gray-300 dark:group-hover:text-white transition line-clamp-1"
-							>
-								{prompt.content}
-							</div>
-							<div
-								class="text-xs text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100 font-normal line-clamp-1"
-							>
-								{$i18n.t('Prompt')}
-							</div>
-						{/if}
-					</div>
-				</button>
-			{/each}
-		</div>
+		<SuggestionCards prompts={filteredPrompts} {onSelect} />
 	{/if}
 </div>
-
-<style>
-	/* Waterfall animation for the suggestions */
-	@keyframes fadeInUp {
-		0% {
-			opacity: 0;
-			transform: translateY(6px);
-		}
-		100% {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	.waterfall {
-		opacity: 0;
-		animation-name: fadeInUp;
-		animation-duration: 200ms;
-		animation-fill-mode: forwards;
-		animation-timing-function: ease;
-	}
-</style>

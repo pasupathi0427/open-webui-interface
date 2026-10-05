@@ -50,6 +50,7 @@
 
 	import '../tailwind.css';
 	import '../app.css';
+	import '$lib/styles/theme-tokens.css'; // CUSTOM: theme tokens + global accent layer
 	import 'tippy.js/dist/tippy.css';
 
 	import { executeToolServer, getBackendConfig, getModels, getVersion } from '$lib/apis';
