@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
+	import { getContext, onDestroy, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	import {
@@ -40,6 +40,9 @@
 	import { updateUserSettings } from '$lib/apis/users'; // CUSTOM
 	import ModelPickerModal from './ModelPickerModal.svelte'; // CUSTOM
 	import ModelTile from './Placeholder/ModelTile.svelte'; // CUSTOM
+	import ResetRequestsModal from './Usage/ResetRequestsModal.svelte'; // CUSTOM
+	import QueueList from '../icons/QueueList.svelte'; // CUSTOM
+	import { pendingResetCount, refreshPendingResetCount } from '$lib/stores/usage'; // CUSTOM
 
 	const i18n: any = getContext('i18n');
 
@@ -62,6 +65,17 @@
 	export let onChooseModel: (id: string) => void = () => {};
 	let showModelPicker = false;
 	let pickerWelcome = false;
+
+	// CUSTOM: admin queue of token reset requests
+	let showResetRequests = false;
+	let resetPoll: ReturnType<typeof setInterval>;
+	onMount(() => {
+		if ($user?.role !== 'admin') return;
+		refreshPendingResetCount();
+		// ponytail: 60s poll; push via socket event if the queue needs to be instant
+		resetPoll = setInterval(refreshPendingResetCount, 60_000);
+	});
+	onDestroy(() => clearInterval(resetPoll));
 	$: if (
 		!pickerWelcome &&
 		$settings &&
@@ -203,6 +217,26 @@
 				<div class="lg:mr-1 flex flex-none items-center gap-2 self-center">
 					<!-- <div class="md:hidden flex self-center w-[0.0625rem] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
+					<!-- CUSTOM: admin — pending token reset requests -->
+					{#if $user?.role === 'admin' && $pendingResetCount > 0}
+						<Tooltip content={$i18n.t('Token reset requests')}>
+							<button
+								id="reset-requests-button"
+								class="relative flex size-8 items-center justify-center rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-(--theme-ink-2) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
+								aria-label={$i18n.t('{{count}} token reset requests', {
+									count: $pendingResetCount
+								})}
+								on:click={() => (showResetRequests = true)}
+							>
+								<QueueList className="size-4" strokeWidth="1.8" />
+								<span
+									class="absolute -top-1.5 -right-1.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-(--theme-accent) text-(--theme-on-accent) text-[0.625rem] font-semibold leading-[1.125rem] text-center"
+									aria-hidden="true">{$pendingResetCount > 99 ? '99+' : $pendingResetCount}</span
+								>
+							</button>
+						</Tooltip>
+					{/if}
+
 					<!-- CUSTOM: "Choose model" — immediately left of Temporary Chat -->
 					{#if ($models ?? []).length > 0}
 						<Tooltip content={$i18n.t('Choose model')}>
@@ -310,6 +344,9 @@
 	</div>
 
 	<!-- CUSTOM -->
+	{#if $user?.role === 'admin'}
+		<ResetRequestsModal bind:show={showResetRequests} />
+	{/if}
 	<ModelPickerModal
 		bind:show={showModelPicker}
 		{selectedModelId}

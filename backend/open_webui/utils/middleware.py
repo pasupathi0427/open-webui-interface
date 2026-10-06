@@ -129,6 +129,7 @@ from open_webui.utils.misc import (
 from open_webui.utils.payload import apply_params_to_form_data, apply_system_prompt_to_body, resolve_system_prompt
 from open_webui.utils.plugin import load_function_module_by_id
 from open_webui.utils.response import merge_usage, normalize_usage
+from open_webui.models.usage import Usage  # CUSTOM
 from open_webui.utils.sanitize import sanitize_code
 from open_webui.utils.skills import (
     apply_skills_create_prompt,
@@ -4047,6 +4048,31 @@ async def background_tasks_handler(ctx):
             )
 
 
+async def record_usage_from_ctx(ctx):
+    """CUSTOM: add this completion's tokens to the user's usage ledger (token limits).
+
+    Provider-reported total when present, otherwise a chars/4 estimate of prompt + reply,
+    capped at the allowance remaining.
+    Never raises: usage accounting must not break a chat.
+    """
+    try:
+        message = ctx.get('assistant_message') or {}
+        if not message or getattr(ctx['request'].state, 'internal', False) is True:
+            return
+        usage = normalize_usage(message.get('usage') or {})
+        tokens = int(usage.get('total_tokens') or 0)
+        if not tokens:
+            prompt = json.dumps((ctx.get('form_data') or {}).get('messages') or [], default=str)
+            tokens = (len(prompt) + len(message.get('content') or '')) // 4
+        # The reply that crosses the limit is still answered, but only counted up to the allowance
+        # left, so "used" never exceeds the allowance and a Reset restores exactly what is shown.
+        # Real per-message usage stays in chat_message for Analytics.
+        remaining = (await Usage.get_status(ctx['user']))['remaining']
+        await Usage.record(ctx['user'].id, min(tokens, remaining))
+    except Exception as e:
+        log.warning(f'usage: failed to record completion usage: {e}')
+
+
 async def outlet_filter_handler(ctx):
     """Run outlet filters inline after chat completion.
 
@@ -4066,6 +4092,8 @@ async def outlet_filter_handler(ctx):
 
     chat_id = metadata.get('chat_id', '')
     message_id = metadata.get('message_id')
+
+    await record_usage_from_ctx(ctx)  # CUSTOM: every completion reaches here with its final usage
 
     if not chat_id and not ctx.get('assistant_message'):
         return

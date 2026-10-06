@@ -9,6 +9,7 @@
 	import Permissions from './Permissions.svelte';
 	import Users from './Users.svelte';
 	import GroupPreviewPanel from './GroupPreviewPanel.svelte';
+	import UsageTab from './UsageTab.svelte'; // CUSTOM
 	import { DEFAULT_PERMISSIONS } from '$lib/constants/permissions';
 	import { getUserDefaultPermissions, getUserDefaultPermissionsDefaults } from '$lib/apis/users';
 	import UserPlusSolid from '$lib/components/icons/UserPlusSolid.svelte';
@@ -30,6 +31,7 @@
 	export let custom = true;
 
 	export let tabs = ['general', 'permissions', 'users'];
+	$: usageGroupId = (group as { id?: string } | null)?.id; // CUSTOM
 
 	let selectedTab = 'general';
 	let loading = false;
@@ -168,7 +170,7 @@
 					<div class="flex flex-col lg:flex-row w-full h-full pb-2 lg:space-x-4">
 						<div
 							id="admin-settings-tabs-container"
-							class="tabs flex flex-row overflow-x-auto gap-2.5 max-w-full lg:gap-1 lg:flex-col lg:flex-none lg:w-40 dark:text-gray-200 text-sm font-normal text-left scrollbar-none"
+							class="tabs flex flex-row overflow-x-auto gap-2.5 max-w-full lg:gap-1 lg:flex-col lg:flex-none lg:w-40 dark:text-gray-200 text-sm font-normal text-left scrollbar-none [&>button]:shrink-0 [&>button]:whitespace-nowrap"
 						>
 							{#if tabs.includes('general')}
 								<button
@@ -264,6 +266,35 @@
 									<div class=" self-center">{$i18n.t('Preview')}</div>
 								</button>
 							{/if}
+
+							<!-- CUSTOM: department token usage -->
+							{#if tabs.includes('usage') && usageGroupId}
+								<button
+									class="px-0.5 py-1 max-w-fit w-fit rounded-lg flex-1 lg:flex-none flex text-right transition {selectedTab ===
+									'usage'
+										? ''
+										: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+									on:click={() => {
+										selectedTab = 'usage';
+									}}
+									type="button"
+								>
+									<div class=" self-center mr-2">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 16 16"
+											fill="currentColor"
+											class="w-4 h-4"
+											aria-hidden="true"
+										>
+											<path
+												d="M2 13.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5ZM3 11V8.5a1 1 0 0 1 2 0V11a1 1 0 0 1-2 0Zm4 0V5.5a1 1 0 0 1 2 0V11a1 1 0 0 1-2 0Zm4 0V3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0Z"
+											/>
+										</svg>
+									</div>
+									<div class=" self-center">{$i18n.t('Usage')}</div>
+								</button>
+							{/if}
 						</div>
 
 						<div class="flex-1 mt-1 lg:mt-1 lg:h-[30rem] lg:max-h-[30rem] flex flex-col">
@@ -284,6 +315,8 @@
 									<Users bind:userCount groupId={group?.id} {onMemberChange} />
 								{:else if selectedTab == 'preview'}
 									<GroupPreviewPanel groupId={group?.id} />
+								{:else if selectedTab == 'usage' && usageGroupId}
+									<UsageTab groupId={usageGroupId} />
 								{/if}
 							</div>
 

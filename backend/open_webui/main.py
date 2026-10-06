@@ -179,6 +179,8 @@ from open_webui.routers import (
     users,
     utils,
 )
+from open_webui.routers import usage as usage_router  # CUSTOM
+from open_webui.models.usage import Usage  # CUSTOM
 from open_webui.routers.retrieval import (
     get_ef,
     get_embedding_function,
@@ -883,6 +885,7 @@ app.include_router(utils.router, prefix='/api/v1/utils', tags=['utils'])
 app.include_router(terminals.router, prefix='/api/v1/terminals', tags=['terminals'])
 app.include_router(automations.router, prefix='/api/v1/automations', tags=['automations'])
 app.include_router(calendar.router, prefix='/api/v1/calendars', tags=['calendars'])
+app.include_router(usage_router.router, prefix='/api/v1/usage', tags=['usage'])  # CUSTOM
 
 # SCIM 2.0 API for identity management
 if ENABLE_SCIM:
@@ -1114,6 +1117,16 @@ async def chat_completion(
     form_data: dict,
     user=Depends(get_verified_user),
 ):
+    # CUSTOM: token limit pre-check (admins are tracked, never blocked)
+    if user.role != 'admin':
+        usage_status = await Usage.get_status(user)
+        if usage_status['blocked']:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail='USAGE_LIMIT_REACHED: You have used your token allowance for this period. '
+                'Raise a reset request to your admin.',
+            )
+
     if not request.app.state.MODELS:
         await get_all_models(request, user=user)
 

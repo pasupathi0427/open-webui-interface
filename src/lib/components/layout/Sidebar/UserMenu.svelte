@@ -32,6 +32,7 @@
 	import WorkspaceIcon from './icons/Workspace.svelte';
 	import XMarkIcon from './icons/XMark.svelte';
 	import Swatch from '$lib/components/icons/Swatch.svelte'; // CUSTOM
+	import UsageCard from '$lib/components/chat/Usage/UsageCard.svelte'; // CUSTOM
 	import { updateUserStatus, updateUserSettings } from '$lib/apis/users';
 	import { toast } from 'svelte-sonner';
 
@@ -240,6 +241,9 @@
 					</div>
 				{/if}
 			{/if}
+
+			<!-- CUSTOM: token usage this period -->
+			<UsageCard />
 
 			{#if profile}
 				<hr class="border-gray-50/30 dark:border-gray-800/30 my-0.5 mx-1 p-0" />

@@ -22,6 +22,13 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/chat/Chat.svelte — passes `selectedModelId` / `onChooseModel` (sets `selectedModels = [id]`) to Navbar
 - src/lib/components/layout/Sidebar/UserMenu.svelte — Swatch import, `profile-menu` class, header name + role, "Customize" item, scoped `<style>` skin
 - backend/open_webui/routers/users.py — `appTheme`, `hasSeenModelPicker` exempt from the Interface-permission strip
+- backend/open_webui/main.py — usage router import + `include_router('/api/v1/usage')`; token-limit pre-check at the top of `chat_completion` (429 `USAGE_LIMIT_REACHED`)
+- backend/open_webui/utils/middleware.py — `Usage` import; new `record_usage_from_ctx()`; one call at the start of `outlet_filter_handler`
+- src/lib/components/chat/MessageInput.svelte — import + `<UsageLimitBanner />` as first child of the input form
+- src/lib/components/chat/Chat.svelte — `handleOpenAIError`: strip `USAGE_LIMIT_REACHED:` prefix, refresh usage status
+- src/lib/components/admin/Users/Groups/EditGroupModal.svelte — `UsageTab` import, `usageGroupId`, "Usage" tab button + panel
+- src/lib/components/admin/Users/Groups/EditGroupModal.svelte (also) — tab bar `[&>button]:shrink-0 [&>button]:whitespace-nowrap` (mobile fix)
+- src/lib/components/admin/Users/Groups/GroupItem.svelte — `'usage'` added to the edit modal's tabs
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -146,3 +153,45 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - i18n (en-US): Choose a model, Choose model, Customize, Make {{name}} my default, No model matches "{{query}}", Pick the right model for your task, Search models, Start with {{name}}, Theme, accent colour, pattern, Try a different name or tag., Use {{name}}, Welcome… , {{name}} is your default.
 - Config added: none. DB migration: none.
 - Verified: svelte-check 6991 errors (0 in new files; +3 vs 6988 are new `$i18n` lines in UserMenu, matching that file's existing untyped-i18n pattern); users.py parses; all 6 scenes generate valid SVG (node smoke test). Not yet verified in a browser.
+
+## [2026-10-06] F1/F2 Token usage governance — department limits, reset requests, usage card, limit banner
+- Author: Claude / reviewer: <owner>
+- Model: department = Open WebUI group. Each user's allowance = department monthly limit (default 10,000,000, env `USAGE_DEFAULT_TOKEN_LIMIT`) or their per-user override, plus approved top-up/reset grants in the current period. Multi-group user → the group giving the highest limit; no group → "Default" department (10M, period anchored at account creation).
+- Period: 30 days from the department's anchor, rolled forward lazily on read (no cron). Saving a different token limit restarts the department period today; grants made in a period expire with it ("Expires at" shown in the group Usage tab).
+- Counting: new `usage_ledger` (one row per completion, provider `total_tokens`, else chars/4 estimate of prompt + reply), recorded at the single choke point every UI completion passes (`outlet_filter_handler`). Deleting chats does not refund usage; temporary chats are counted.
+- Enforcement: server-side pre-check in `chat_completion` → HTTP 429 for non-admins whose usage ≥ allowance. Admins are tracked (card shows usage) but never blocked.
+- Reset requests: user clicks "Request reset" in the limit banner → `usage_request` (pending). Rejected immediately when one is already pending or the department's resets per period (default 2, env `USAGE_DEFAULT_RESETS`) are used (pending + approved count; denied do not).
+- Admin decisions (dropdown per row): Top-up (+N this period) · Reset (grant = used − earlier grants → full base allowance this period) · Raise limit (permanent per-user override = N) · Deny (block stays). Top-up/Raise need a token amount → "Update" icon; Reset/Deny → "Confirm" icon (tooltips).
+- UI:
+  - Admin Panel › Groups › edit group › **Usage** tab (`UsageTab.svelte`): monthly limit per user, reset requests per period, period started / expires at, Save (own save, independent of the group Save), this department's pending requests, members' used / allowance bars.
+  - Navbar (admin only, chat page): queue badge with pending count, immediately left of "Choose model"; hidden at 0; opens `ResetRequestsModal` (all departments). Count polled every 60 s.
+  - Profile menu: `UsageCard` — Monthly usage limit, used / allowance, "Resets in Xd Yh", "% remaining", bar (accent → amber ≤20% → red when blocked).
+  - Chat input: `UsageLimitBanner` (Claude-style bar) when blocked — states: request reset (button) / pending / declined / no resets left; re-checks every 60 s and on window focus while blocked.
+- Files created: backend/open_webui/models/usage.py, backend/open_webui/routers/usage.py, backend/open_webui/migrations/versions/a7f3c2e1b9d4_add_usage_tables.py, src/lib/apis/usage/index.ts, src/lib/stores/usage.ts, src/lib/components/chat/Usage/{UsageLimitBanner,ResetRequestsTable,ResetRequestsModal,UsageCard}.svelte, src/lib/components/admin/Users/Groups/UsageTab.svelte
+- API (`/api/v1/usage`): GET /me (user), POST /requests (user), GET /requests/count, GET /requests[?group_id], POST /requests/{id}/decide, GET|POST /groups/{id} (admin).
+- DB migration: a7f3c2e1b9d4 (revises d4c1a8e37b62) — tables usage_config, usage_ledger (+ index user_id, created_at), usage_request (+ index user_id). Downgrade drops all three. Usage config lives in its own table, not `group.data`, because the group edit Save rewrites `data` wholesale.
+- i18n (en-US): 33 keys (usage card, banner, requests table, group tab).
+- Known gaps: direct API-key calls that bypass the UI response handler (streaming API, or non-streaming with `ENABLE_API_OUTLET_FILTERS` off) are pre-checked but not yet counted; no 80% warning; no admin note on Deny; queue badge updates by 60 s poll, not push.
+- Verified: end-to-end check on a temp SQLite DB through the real migration chain (period roll-over maths; default 10M; block at 100%; pending/duplicate rejection; top-up, reset, raise, deny; resets-per-period exhaustion; decided-twice guard; limit change restarts the period and drops old grants; same limit keeps the period; no-group default; members usage) — all passed. Backend files compile. svelte-check 6992 (0 in new usage files; +1 = new `$i18n` tab label in EditGroupModal, that file's existing untyped-i18n pattern). Not yet verified in a browser.
+
+## [2026-10-06] Usage fixes — grant period, capped display, layout; group dialog mobile tabs (owner feedback)
+- Author: Claude / reviewer: <owner>
+- Bug (backend/open_webui/models/usage.py): a grant was stamped with the period the request was *made* in. If the admin changed the limit (which restarts the period) before deciding, the approved top-up/reset landed in the old period and never counted (owner saw 24.2K / 14.5K after "Request updated"). `decide()` now stamps the request with the department's current period at approval time.
+- Display: used tokens are shown capped at the allowance (14.5K / 14.5K) in the profile-menu card and the group members list. The last reply may run past the allowance and is still answered; the raw total stays in the ledger so a Reset still restores a full allowance.
+- Layout: requests table scroller is `w-0 min-w-full overflow-x-auto`, so its 46rem minimum no longer widens the Usage tab (inputs/Save were pushed outside the dialog when a request was queued). Usage card: title on its own line (no wrap), token count moved under the bar.
+- Existing issue (mobile): Edit User Group tab buttons shrank until labels broke per letter; tab bar now keeps labels whole and scrolls sideways.
+- Verified: backend check suite re-run incl. new regression (request → limit change → approve → grant counts) — all passed. svelte-check 6992 (unchanged; 0 in usage files). Not yet verified in a browser.
+
+## [2026-10-06] Usage fix — count a reply only up to the allowance left (owner report)
+- Author: Claude / reviewer: <owner>
+- Symptom: user at 24.4K / 24.5K (100 left) sent a message whose reply used ~6K tokens; card showed the capped 24.5K / 24.5K, but after a Reset it showed 30.2K / 30.4K.
+- Cause: the ledger stored the full reply (true total ~30.2K) while the UI showed it capped at the allowance; Reset grants "used beyond earlier grants", so it was computed from the hidden 30.2K. Arithmetic was consistent with the rule, but display and rule used different numbers.
+- Fix (backend/open_webui/utils/middleware.py `record_usage_from_ctx`): the reply that crosses the limit is still answered, but recorded only up to the allowance remaining, so used ≤ allowance always and a Reset shows X / X + limit. Real per-message usage stays in `chat_message` (Analytics). Frontend `Math.min` display caps kept for ledger rows written before this fix.
+- Note: users already over (e.g. the tester at 30.2K) keep their current figures until the next reset or period.
+- Verified: backend suite + owner scenario via the real `record_usage_from_ctx` (limit 100: 6000-token reply → 100 / 100 blocked; further reply adds 0; Reset → 100 / 200; another big reply + Reset → 200 / 300) — all passed.
+
+## [2026-10-06] Usage — estimate disclaimer (owner request)
+- Author: Claude / reviewer: <owner>
+- Files modified: src/lib/components/chat/Usage/UsageCard.svelte (under the token count), src/lib/components/admin/Users/Groups/UsageTab.svelte (under "Members this period"), en-US translation.json (1 key).
+- Text: "Token counts are estimates and may not reflect actual API usage".
+- Follow-up: removed from the profile-menu card; in the group Usage tab moved to the bottom-right under the members list (small muted text, Analytics style).

@@ -119,6 +119,8 @@
 	import QueuedMessageItem from './MessageInput/QueuedMessageItem.svelte';
 	import TaskList from './Messages/ResponseMessage/TaskList.svelte';
 
+	import UsageLimitBanner from './Usage/UsageLimitBanner.svelte'; // CUSTOM
+
 	const i18n: any = getContext('i18n');
 
 	type AskUserPrompt = {
@@ -744,12 +746,7 @@
 	export let placeholder = '';
 
 	type ModelCapability =
-		| 'vision'
-		| 'file_upload'
-		| 'web_search'
-		| 'image_generation'
-		| 'code_interpreter'
-		| 'terminal';
+		'vision' | 'file_upload' | 'web_search' | 'image_generation' | 'code_interpreter' | 'terminal';
 	type ModelCapabilitiesById = Record<string, Partial<Record<ModelCapability, boolean>>>;
 
 	let modelCapabilitiesById: ModelCapabilitiesById = {};
@@ -1764,6 +1761,7 @@
 							dispatch('submit', prompt);
 						}}
 					>
+						<UsageLimitBanner /><!-- CUSTOM: token limit reached -->
 						<button
 							id="generate-message-pair-button"
 							type="button"

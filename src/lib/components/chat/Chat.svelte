@@ -4,6 +4,7 @@
 
 	import { getContext, onDestroy, onMount, tick } from 'svelte';
 	import { normalizeAppTheme, themePatternImage } from '$lib/utils/themes'; // CUSTOM
+	import { refreshUsageStatus } from '$lib/stores/usage'; // CUSTOM
 	import { fade } from 'svelte/transition';
 	const i18n: Writable<i18nType> = getContext('i18n');
 
@@ -3725,6 +3726,11 @@
 		}
 
 		console.error(innerError);
+		// CUSTOM: token limit reached → show the limit banner (with reset request) and a clean message
+		if (`${innerError?.detail ?? ''}`.startsWith('USAGE_LIMIT_REACHED')) {
+			innerError.detail = innerError.detail.replace(/^USAGE_LIMIT_REACHED:\s*/, '');
+			refreshUsageStatus();
+		}
 		if ('detail' in innerError) {
 			// FastAPI error
 			toast.error(innerError.detail);
