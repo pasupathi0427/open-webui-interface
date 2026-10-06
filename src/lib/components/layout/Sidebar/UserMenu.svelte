@@ -31,6 +31,7 @@
 	import UserIcon from './icons/User.svelte';
 	import WorkspaceIcon from './icons/Workspace.svelte';
 	import XMarkIcon from './icons/XMark.svelte';
+	import Swatch from '$lib/components/icons/Swatch.svelte'; // CUSTOM
 	import { updateUserStatus, updateUserSettings } from '$lib/apis/users';
 	import { toast } from 'svelte-sonner';
 
@@ -114,11 +115,11 @@
 	<slot />
 
 	<div slot="content">
-		<DropdownMenu className="{className} font-sans text-xs">
+		<DropdownMenu className="{className} font-sans text-xs profile-menu">
 			{#if $user}
 				<div>
 					<button
-						class="flex h-[1.6875rem] items-center gap-2 rounded-xl px-2 text-xs w-full hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition cursor-pointer select-none text-left"
+						class="pm-head flex h-[1.6875rem] items-center gap-2 rounded-xl px-2 text-xs w-full hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition cursor-pointer select-none text-left"
 						type="button"
 						on:click={async () => {
 							show = false;
@@ -137,7 +138,13 @@
 								class="size-4.5 rounded-full object-cover"
 							/>
 						</div>
-						<div class="self-center min-w-0 flex-1 truncate">{$user.name}</div>
+						<!-- CUSTOM: name + role, as in the reference profile header -->
+						<div class="self-center min-w-0 flex-1">
+							<div class="pm-name truncate">{$user.name}</div>
+							<div class="pm-role truncate">
+								{$i18n.t($user.role === 'admin' ? 'Admin' : 'User')}
+							</div>
+						</div>
 
 						{#if showActiveUsers && ($config?.features?.enable_public_active_users_count || role === 'admin') && usage?.user_count}
 							<Tooltip
@@ -237,6 +244,29 @@
 			{#if profile}
 				<hr class="border-gray-50/30 dark:border-gray-800/30 my-0.5 mx-1 p-0" />
 			{/if}
+
+			<!-- CUSTOM: reference "Customize" entry → Settings › Appearance -->
+			<button
+				class="flex h-[1.6875rem] items-center gap-2 rounded-xl px-2 text-[0.8125rem] w-full hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition cursor-pointer select-none text-left"
+				type="button"
+				on:click={async () => {
+					show = false;
+					await showSettings.set('appearance');
+
+					if ($mobile) {
+						await tick();
+						showSidebar.set(false);
+					}
+				}}
+			>
+				<div class="self-center">
+					<Swatch className="size-3.5" strokeWidth="1.5" />
+				</div>
+				<div class="self-center min-w-0">
+					<div class="truncate">{$i18n.t('Customize')}</div>
+					<div class="pm-desc truncate">{$i18n.t('Theme, accent colour, pattern')}</div>
+				</div>
+			</button>
 
 			{#if $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools || $user?.permissions?.workspace?.skills}
 				<div
@@ -595,3 +625,88 @@
 		</DropdownMenu>
 	</div>
 </Dropdown>
+
+<style>
+	/* CUSTOM: reference profile popover (`.pop.pf` / `.mi`) — a skin over the existing markup,
+	   so every item, permission check and handler above is unchanged. Colours from theme tokens. */
+	:global(.app-dropdown-menu.profile-menu) {
+		background: var(--theme-surface) !important;
+		border-color: var(--theme-line-2) !important;
+		border-radius: 14px !important;
+		padding: 6px !important;
+		box-shadow: var(--theme-sh-3) !important;
+		color: var(--theme-ink);
+	}
+	/* rows: original 27px height (--pm-row-h), 22px icon tile (--pm-tile), 13px medium label.
+	   Tune height here: --pm-row-h, --pm-row-py, --pm-tile. */
+	:global(.profile-menu) {
+		--pm-row-h: 1.6875rem;
+		--pm-row-py: 2px;
+		--pm-tile: 22px;
+	}
+	:global(.profile-menu [class*='h-[1.6875rem]']) {
+		height: auto !important;
+		min-height: var(--pm-row-h);
+		padding: var(--pm-row-py) 8px !important;
+		gap: 10px !important;
+		border-radius: 9px !important;
+		font-size: 13px;
+		line-height: 1.35;
+	}
+	:global(.profile-menu .user-menu-row) {
+		border-radius: 9px;
+	}
+	:global(.profile-menu .user-menu-row:hover),
+	:global(.profile-menu [class*='h-[1.6875rem]']:hover) {
+		background: color-mix(in srgb, var(--theme-accent) 7%, var(--theme-surface)) !important;
+	}
+	:global(.profile-menu .user-menu-row [class*='h-[1.6875rem]']:hover) {
+		background: transparent !important;
+	}
+	:global(
+		.profile-menu
+			[class*='h-[1.6875rem]']:not(.pm-head)
+			> div.self-center:first-child:not(.truncate)
+	) {
+		flex: none;
+		width: var(--pm-tile);
+		height: var(--pm-tile);
+		display: grid;
+		place-items: center;
+		border-radius: 6px;
+		background: var(--theme-bg-2);
+		border: 1px solid var(--theme-line);
+		color: var(--theme-ink-2);
+	}
+	:global(.profile-menu [class*='h-[1.6875rem]'] > div.truncate),
+	:global(.profile-menu [class*='h-[1.6875rem]'] .truncate:not(.pm-desc):not(.pm-role)) {
+		font-weight: 500;
+		color: var(--theme-ink);
+	}
+	:global(.profile-menu .pm-desc),
+	:global(.profile-menu .pm-role) {
+		font-size: 11.5px;
+		line-height: 1.25;
+		font-weight: 400;
+		color: var(--theme-ink-3);
+		margin-top: 1px;
+	}
+	:global(.profile-menu hr) {
+		border-color: var(--theme-line) !important;
+		margin: 4px 2px !important;
+	}
+	/* header: 40px avatar, name + role */
+	:global(.profile-menu .pm-head) {
+		padding: 6px 8px 8px !important;
+	}
+	:global(.profile-menu .pm-head > div:first-child),
+	:global(.profile-menu .pm-head > div:first-child img) {
+		width: 40px !important;
+		height: 40px !important;
+	}
+	:global(.profile-menu .pm-name) {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--theme-ink);
+	}
+</style>

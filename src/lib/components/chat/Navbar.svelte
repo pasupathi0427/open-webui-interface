@@ -8,6 +8,7 @@
 		chatId,
 		config,
 		mobile,
+		models, // CUSTOM
 		settings,
 		showControls,
 		showSidebar,
@@ -36,6 +37,9 @@
 	import ChatCheck from '../icons/ChatCheck.svelte';
 	import Knobs from '../icons/Knobs.svelte';
 	import { isTemporaryChatId } from '$lib/utils/chatId';
+	import { updateUserSettings } from '$lib/apis/users'; // CUSTOM
+	import ModelPickerModal from './ModelPickerModal.svelte'; // CUSTOM
+	import ModelTile from './Placeholder/ModelTile.svelte'; // CUSTOM
 
 	const i18n: any = getContext('i18n');
 
@@ -52,6 +56,28 @@
 	export let archiveChatHandler: (id: string) => void;
 	export let deleteChatHandler: (id: string) => void;
 	export let moveChatHandler: (id: string, folderId: string) => void;
+
+	// CUSTOM: "Choose model" card — opened from the navbar button, and once on first login
+	export let selectedModelId = '';
+	export let onChooseModel: (id: string) => void = () => {};
+	let showModelPicker = false;
+	let pickerWelcome = false;
+	$: if (
+		!pickerWelcome &&
+		$settings &&
+		$settings.hasSeenModelPicker !== true &&
+		!chat?.id &&
+		($models ?? []).filter((m) => !(m?.info?.meta?.hidden ?? false)).length > 1
+	) {
+		pickerWelcome = true;
+		showModelPicker = true;
+	}
+	$: if (pickerWelcome && !showModelPicker && $settings?.hasSeenModelPicker !== true) {
+		settings.set({ ...$settings, hasSeenModelPicker: true });
+		updateUserSettings(localStorage.token, { ui: { hasSeenModelPicker: true } }).catch(
+			console.error
+		);
+	}
 
 	let closedBannerIds = [];
 
@@ -177,6 +203,28 @@
 				<div class="lg:mr-1 flex flex-none items-center gap-2 self-center">
 					<!-- <div class="md:hidden flex self-center w-[0.0625rem] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
+					<!-- CUSTOM: "Choose model" — immediately left of Temporary Chat -->
+					{#if ($models ?? []).length > 0}
+						<Tooltip content={$i18n.t('Choose model')}>
+							<button
+								id="choose-model-button"
+								class="flex items-center gap-2 h-8 max-md:w-8 max-md:justify-center md:pl-1 md:pr-3 rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-[0.8125rem] font-medium text-(--theme-ink) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
+								aria-label={$i18n.t('Choose model')}
+								on:click={() => {
+									pickerWelcome = true;
+									showModelPicker = true;
+								}}
+							>
+								<ModelTile
+									model={$models.find((m) => m.id === selectedModelId)}
+									lang={$i18n.language}
+									className="size-6 rounded-full"
+								/>
+								<span class="max-md:hidden">{$i18n.t('Choose model')}</span>
+							</button>
+						</Tooltip>
+					{/if}
+
 					{#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
 						{#if !chat?.id}
 							<Tooltip content={$i18n.t(`Temporary Chat`)}>
@@ -260,6 +308,15 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- CUSTOM -->
+	<ModelPickerModal
+		bind:show={showModelPicker}
+		{selectedModelId}
+		welcome={$settings?.hasSeenModelPicker !== true}
+		hasChat={!!history?.currentId}
+		onSelect={onChooseModel}
+	/>
 
 	{#if $temporaryChatEnabled && isTemporaryChatId($chatId)}
 		<div class=" w-full z-30 text-center">

@@ -17,6 +17,11 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/app.html — `<title>` "Open WebUI" → "Karix"; apple-touch-icon SVG → PNG; 3 iOS/Android web-app meta tags
 - src/lib/constants.ts — `APP_NAME` 'Open WebUI' → 'Karix' (initial `WEBUI_NAME` store value)
 - backend/open_webui/main.py — `/manifest.json`: `background_color` #343541 → #ffffff, `theme_color` added, SVG maskable icon replaced by PNG 192/512 + padded maskable 512
+- src/lib/components/chat/Placeholder.svelte — landing heading (model image stack + name + description + author) replaced by `<LandingHero>`; old imports left in place to keep the diff small
+- src/lib/components/chat/Navbar.svelte — 3 imports + `models` store; `selectedModelId`/`onChooseModel` props; first-login trigger; "Choose model" button before Temporary Chat; `<ModelPickerModal>` mount
+- src/lib/components/chat/Chat.svelte — passes `selectedModelId` / `onChooseModel` (sets `selectedModels = [id]`) to Navbar
+- src/lib/components/layout/Sidebar/UserMenu.svelte — Swatch import, `profile-menu` class, header name + role, "Customize" item, scoped `<style>` skin
+- backend/open_webui/routers/users.py — `appTheme`, `hasSeenModelPicker` exempt from the Interface-permission strip
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -117,3 +122,27 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Not changed: the upstream "OI" PNGs in `static/static` (unreferenced by the app shell); `backend/open_webui/static/*` is regenerated from `static/static` at startup (config.py), so its working-tree deletions are build output. The app has no service worker (upstream only unregisters old ones), so no cache/versioning impact.
 - PWA checklist (static review): manifest has name/short_name Karix, `display: standalone`, `start_url`, SVG + PNG 192/512 + maskable icons, white background/theme colour; iOS gets PNG touch icon, `apple-mobile-web-app-title`, `apple-mobile-web-app-capable`; `theme-color` meta still synced by `applyThemeAccent`.
 - Verified: `main.py` parses; svelte-check 6998 errors / 199 warnings (unchanged). Card layout rendered at 390 / 820 / 1280 px in headless Chromium from the component's real CSS + theme tokens: phone = 72% card with peek reaching the screen edge, iPad and desktop = 3 aligned columns. Not yet verified: real device install (Android / iOS), in-app browser check.
+
+## [2026-10-05] Landing heading — reference model tile + title (owner request)
+- Author: Claude / reviewer: <owner>
+- Why: landing showed a centred brand-circle image + "Hello, admin"; the reference (`.lp-hero`) is a left-aligned heading: greeting eyebrow with green dot, 44px tone-tinted model tile, "karix <Model name>" title (32px, 25px on phones), model description below.
+- Files modified: src/lib/components/chat/Placeholder.svelte (see Upstream touchpoints); src/lib/i18n/locales/en-US/translation.json — `Good morning/afternoon/evening, {{name}}` (custom-key group at top).
+- Files created:
+  - src/lib/components/chat/Placeholder/LandingHero.svelte — heading aligned with the input box (`@md:max-w-3xl`). Keeps every behaviour of the old block: multi-model stack with click-to-select (`bind:selectedModelIdx`), tag tooltip, sanitised markdown description + tooltip, "By <author>" line. Greeting uses the user's first name and local time; hidden when no model is selected (title already says "Hello, <name>"). Brand word in the title is `$WEBUI_NAME` lower-cased, in the accent colour.
+  - src/lib/components/chat/Placeholder/ModelTile.svelte — model's own logo when it has one; otherwise a tinted tile with a sparkle in a stable per-model tone (`--theme-tone-*`, hashed from the model id), or the accent when no model is selected. "No logo" = the profile-image endpoint redirects to `/static/karix-icons/*` (one cached `fetch` per model/theme). Error fallback to `brandLogoCircle` kept (LICENSE comment preserved).
+- Not included: the reference "Switch model" chip next to the title — it opens the Choose Model card (F3), which is not built yet.
+- Config added: none. DB migration: none.
+- Verified: svelte-check 6988 errors / 198 warnings (down from 6998 / 199; 0 in new files). Not yet verified in a browser.
+
+## [2026-10-06] F3 Choose Model card + navbar button; profile menu skin; theme persistence fix (owner request)
+- Author: Claude / reviewer: <owner>
+- F3: `ModelPickerModal.svelte` (reference v3.1 compact `.mp`): title, subtitle (welcome copy on first login), pill search, card grid 3 cols / 2 cols (container ≤640px) / phone = bottom sheet with horizontal cards; each card = illustrated scene + tone badge (model logo when it has one) + name + "Default" pill + full description + first tag; radio semantics (arrows move, Space selects, Enter/double-click confirms); footer "Make X my default" (same save as the chat-input selector: `settings.models`) / "X is your default", Cancel, "Start with X" (landing) / "Use X" (chat). Models = `$models` minus hidden, Fuse search with the selector's keys/threshold. Chosen model → `selectedModels = [id]` in Chat.svelte; chat-input selector untouched.
+- Navbar: "Choose model" pill (current model tile + label; icon only below md) immediately left of Temporary Chat.
+- First login: opens once on the landing page when the user has >1 visible model and `settings.ui.hasSeenModelPicker` is not true; closing (or any manual open) sets the flag via `updateUserSettings` (backend, per user, survives devices).
+- Scene art: `src/lib/utils/modelScenes.ts` — the 6 reference scenes + helpers ported verbatim (`@ts-nocheck`, static markup); scene chosen from `modelTone(model.id)` so each model keeps the same picture.
+- Landing title: removed the "karix" prefix (owner) — model name only.
+- Profile menu (owner: menu did not follow the theme): reference `.pop.pf` skin over the existing markup — token surface/border/radius/shadow, icon tiles, name + role header, new "Customize" item → Settings › Appearance. All items/permissions/pin behaviour unchanged. Row height kept at the original 27px; knobs `--pm-row-h`, `--pm-row-py`, `--pm-tile` in UserMenu.svelte `<style>`. Theme switcher row from the reference not added (General tab owns the light/dark/OLED/Karix logic).
+- Backend fix: non-admin users without the "Interface settings" permission had every Interface key stripped on save, so their `appTheme` and `hasSeenModelPicker` never persisted. Those two keys are now exempt (personal appearance / onboarding, not admin-governed).
+- i18n (en-US): Choose a model, Choose model, Customize, Make {{name}} my default, No model matches "{{query}}", Pick the right model for your task, Search models, Start with {{name}}, Theme, accent colour, pattern, Try a different name or tag., Use {{name}}, Welcome… , {{name}} is your default.
+- Config added: none. DB migration: none.
+- Verified: svelte-check 6991 errors (0 in new files; +3 vs 6988 are new `$i18n` lines in UserMenu, matching that file's existing untyped-i18n pattern); users.py parses; all 6 scenes generate valid SVG (node smoke test). Not yet verified in a browser.

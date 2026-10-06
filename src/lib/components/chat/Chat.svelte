@@ -4359,6 +4359,10 @@
 							{archiveChatHandler}
 							{deleteChatHandler}
 							{moveChatHandler}
+							selectedModelId={selectedModels?.[0] ?? ''}
+							onChooseModel={(id) => {
+								selectedModels = [id]; // CUSTOM: same effect as picking in the chat-input selector
+							}}
 							onSaveTempChat={async () => {
 								try {
 									if (!history?.currentId || !Object.keys(history.messages).length) {

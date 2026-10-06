@@ -495,6 +495,9 @@ async def update_user_settings_by_session_user(
         ):
             # Omitted fields are unchanged, so unauthorized Interface fields can be discarded.
             for key in InterfaceSettings.model_fields:
+                # CUSTOM: personal appearance + onboarding flag are not admin-governed Interface options
+                if key in ('appTheme', 'hasSeenModelPicker'):
+                    continue
                 ui_settings.pop(key, None)
 
         if (
