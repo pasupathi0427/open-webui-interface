@@ -6,14 +6,12 @@
 	import type { i18n as i18nType } from 'i18next';
 	import ArrowRight from '$lib/components/icons/ArrowRight.svelte';
 	import ChevronRight from '$lib/components/icons/ChevronRight.svelte';
-	import Check from '$lib/components/icons/Check.svelte';
+	import { SUGGESTION_THUMBS } from '$lib/utils/suggestionThumbs';
 
 	const i18n: Writable<i18nType> = getContext('i18n');
 
 	export let prompts: { id?: string; content: string; title?: string[] }[] = [];
 	export let onSelect: (e: { type: string; data: string }) => void = () => {};
-
-	const THUMBS = ['chat', 'doc', 'bars'];
 </script>
 
 <div class="suggestion-cards-wrap">
@@ -27,27 +25,7 @@
 				on:click={() => onSelect({ type: 'prompt', data: prompt.content })}
 			>
 				<div class="sc-thumb" aria-hidden="true">
-					{#if THUMBS[idx % THUMBS.length] === 'chat'}
-						<div class="t-chat">
-							<div class="b"><i class="h"></i><i></i><i style="width:70%"></i></div>
-							<div class="b me"><i></i></div>
-						</div>
-					{:else if THUMBS[idx % THUMBS.length] === 'doc'}
-						<div class="t-doc">
-							<div class="paper">
-								<i style="width:56%"></i><i style="width:82%"></i><i style="width:68%"></i>
-								<span class="tot"><i></i><b></b></span>
-							</div>
-							<span class="stamp"><Check className="size-3.5" strokeWidth="3" /></span>
-						</div>
-					{:else}
-						<div class="t-bars">
-							{#each [42, 64, 50, 86, 58, 72] as h, k}
-								<i class:on={k === 3 || k === 5} style="height:{h}%; animation-delay:{k * 40}ms"
-								></i>
-							{/each}
-						</div>
-					{/if}
+					{@html SUGGESTION_THUMBS[idx % SUGGESTION_THUMBS.length]}
 					<span class="sc-go"><ArrowRight className="size-3.5" strokeWidth="2.2" /></span>
 				</div>
 				<div class="sc-b">
@@ -136,7 +114,7 @@
 	.sc-thumb {
 		position: relative;
 		height: 92px;
-		padding: 12px 14px;
+		padding: 0;
 		overflow: hidden;
 		background: var(--theme-bg-2);
 		border-bottom: 1px solid var(--theme-line);
@@ -209,128 +187,50 @@
 		text-overflow: ellipsis;
 	}
 
-	/* thumb: chat bubbles */
-	.t-chat {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
+	/* v2 suggestion art: class names → theme tokens (reference suggSVG mapping) */
+	.sc-thumb :global(.sqt) {
+		display: block;
+		width: 100%;
 		height: 100%;
 	}
-	.t-chat .b {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		width: 66%;
-		padding: 7px 8px;
-		border-radius: 3px 8px 8px 8px;
-		background: var(--theme-surface);
-		box-shadow: inset 0 0 0 1px var(--theme-line);
+	.sc-thumb {
+		--g1: color-mix(in srgb, var(--theme-ink-4) 70%, var(--theme-surface));
 	}
-	.t-chat .b.me {
-		align-self: flex-end;
-		width: 38%;
-		border-radius: 8px 3px 8px 8px;
-		background: var(--tcs);
-		box-shadow: none;
+	.sc-thumb :global(.cd) {
+		fill: var(--theme-surface);
+		stroke: var(--theme-line);
 	}
-	.t-chat i {
-		display: block;
-		height: 5px;
-		border-radius: 3px;
-		background: var(--theme-line-2);
+	.sc-thumb :global(.sh) {
+		fill: #17162c;
+		fill-opacity: 0.06;
 	}
-	.t-chat i.h {
-		width: 55%;
-		background: var(--theme-ink-4);
+	.sc-thumb :global(.a) {
+		fill: var(--tc);
 	}
-	.t-chat .me i {
-		background: var(--tcl);
+	.sc-thumb :global(.on) {
+		fill: var(--theme-on-accent);
+	}
+	.sc-thumb :global(.g1) {
+		fill: var(--g1);
+	}
+	.sc-thumb :global(.g2) {
+		fill: var(--theme-line-2);
+	}
+	/* strokes after fills so "cd ka" / "cd col" take the later stroke, as in the reference */
+	.sc-thumb :global(.col) {
+		fill: var(--theme-surface);
+		stroke: var(--g1);
+	}
+	.sc-thumb :global(.kg1) {
+		stroke: var(--g1);
+	}
+	.sc-thumb :global(.ka) {
+		stroke: var(--tc);
+	}
+	.sc-thumb :global(.kon) {
+		stroke: var(--theme-on-accent);
 	}
 
-	/* thumb: document with check stamp */
-	.t-doc {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-	}
-	.t-doc .paper {
-		display: flex;
-		flex-direction: column;
-		gap: 5px;
-		width: 58%;
-		height: 100%;
-		padding: 8px 10px;
-		border-radius: 6px;
-		background: var(--theme-surface);
-		box-shadow:
-			var(--theme-sh-1),
-			inset 0 0 0 1px var(--theme-line);
-	}
-	.t-doc .paper > i {
-		display: block;
-		height: 5px;
-		border-radius: 3px;
-		background: var(--theme-line-2);
-	}
-	.t-doc .tot {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-top: auto;
-		padding-top: 5px;
-		border-top: 1px dashed var(--theme-line-2);
-	}
-	.t-doc .tot i {
-		width: 30%;
-		height: 5px;
-		border-radius: 3px;
-		background: var(--theme-line-2);
-	}
-	.t-doc .tot b {
-		width: 22%;
-		height: 6px;
-		border-radius: 3px;
-		background: var(--tc);
-	}
-	.t-doc .stamp {
-		position: absolute;
-		right: 14%;
-		top: 4px;
-		width: 26px;
-		height: 26px;
-		border-radius: 50%;
-		display: grid;
-		place-items: center;
-		color: var(--theme-on-accent);
-		background: var(--tc);
-		box-shadow: 0 0 0 3px var(--theme-bg-2);
-		transform: rotate(-12deg);
-	}
-
-	/* thumb: bar chart */
-	.t-bars {
-		display: flex;
-		align-items: flex-end;
-		gap: 8px;
-		height: 100%;
-		padding: 0 4px;
-		border-bottom: 1px solid var(--theme-line-2);
-	}
-	.t-bars i {
-		flex: 1;
-		display: block;
-		border-radius: 4px 4px 1px 1px;
-		background: var(--tcl);
-		transform-origin: bottom;
-		animation: sc-grow 0.6s var(--theme-ease) both;
-	}
-	.t-bars i.on {
-		background: var(--tc);
-	}
-
-	/* `translate` (not `transform`) so the filled animation does not cancel the hover lift */
 	@keyframes sc-rise {
 		from {
 			opacity: 0;
@@ -341,14 +241,8 @@
 			translate: 0 0;
 		}
 	}
-	@keyframes sc-grow {
-		from {
-			transform: scaleY(0);
-		}
-	}
 	@media (prefers-reduced-motion: reduce) {
-		.sc,
-		.t-bars i {
+		.sc {
 			animation: none;
 			opacity: 1;
 		}

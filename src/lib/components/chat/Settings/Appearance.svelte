@@ -12,6 +12,7 @@
 		normalizeAppTheme,
 		themePatternImage,
 		themePatternMask,
+		KARIX_ACCENT,
 		type AppTheme,
 		type ThemeAccentId,
 		type ThemePatternId
@@ -26,7 +27,7 @@
 
 	// Theme mode cards (reference `.ap` previews). Preview colours are artwork, not tokens:
 	// [bg, sidebar first, sidebar, panel, line]
-	type Mode = { id: string; label: string; sub?: string; c: string[]; c2?: string[] };
+	type Mode = { id: string; label: string; sub?: string; c: string[]; c2?: string[]; acc?: string };
 	const LIGHT = ['#E7E7EE', '#1C1B26', '#FFFFFF', '#FFFFFF', '#E3E2EC'];
 	const DARK = ['#1E1D2B', '#EEEDF7', '#2E2D40', '#12111C', '#2E2D40'];
 	$: modes = [
@@ -38,7 +39,13 @@
 			label: 'OLED Dark',
 			c: ['#0D0D0D', '#EEEEEE', '#1A1A1A', '#000000', '#222222']
 		},
-		{ id: 'karix', label: 'Karix', c: ['#0F2966', '#EEF1F7', '#1C3A80', '#020A24', '#1C3A80'] },
+		// Karix: v2 tokens, fixed accent
+		{
+			id: 'karix',
+			label: 'Karix',
+			c: ['#040D2B', '#EEF1FB', '#10215A', '#06133A', '#1D3373'],
+			acc: KARIX_ACCENT
+		},
 		...($config?.features?.enable_easter_eggs
 			? [{ id: 'her', label: 'Her', c: ['#F6E7E0', '#983724', '#FFFFFF', '#FFFFFF', '#ECD5CC'] }]
 			: [])
@@ -154,7 +161,7 @@
 									</span>
 									<span class="ap-p" style="background: {c[3]}">
 										<i style="background: {c[4]}; width: 62%"></i><i style="background: {c[4]}"></i>
-										<i class="a"></i>
+										<i class="a" style={mode.acc ? `background: ${mode.acc}` : undefined}></i>
 									</span>
 								</span>
 							{/each}
@@ -175,11 +182,18 @@
 			<div id="appearance-accent-label" class={sectionLabel}>
 				{$i18n.t('settings.personal.appearance.accent.label')}
 			</div>
-			<p class={hint}>{$i18n.t('settings.personal.appearance.accent.description')}</p>
+			<p class={hint}>
+				{currentMode === 'karix'
+					? $i18n.t('Karix uses its own accent colour. Switch to Light or Dark to pick one.')
+					: $i18n.t('settings.personal.appearance.accent.description')}
+			</p>
 			<div
-				class="grid grid-cols-2 gap-2.5 sm:grid-cols-3"
+				class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 {currentMode === 'karix'
+					? 'opacity-40 pointer-events-none'
+					: ''}"
 				role="radiogroup"
 				aria-labelledby="appearance-accent-label"
+				aria-disabled={currentMode === 'karix'}
 			>
 				{#each THEME_ACCENTS as [id, label, light, dark], idx}
 					{@const checked = appTheme?.accent === id}

@@ -65,8 +65,16 @@
 /* derived tints: recomputed wherever --theme-accent changes */
 :root,
 .dark {
-	--theme-accent-soft: color-mix(in srgb, var(--theme-accent) var(--theme-soft-pct), var(--theme-surface));
-	--theme-accent-line: color-mix(in srgb, var(--theme-accent) var(--theme-line-pct), var(--theme-surface));
+	--theme-accent-soft: color-mix(
+		in srgb,
+		var(--theme-accent) var(--theme-soft-pct),
+		var(--theme-surface)
+	);
+	--theme-accent-line: color-mix(
+		in srgb,
+		var(--theme-accent) var(--theme-line-pct),
+		var(--theme-surface)
+	);
 	--theme-side: color-mix(in srgb, var(--theme-accent) 5%, var(--theme-bg-2));
 	--theme-side-hover: color-mix(in srgb, var(--theme-accent) 9%, var(--theme-bg-2));
 	--theme-side-on: color-mix(in srgb, var(--theme-accent) 15%, var(--theme-surface));
@@ -74,83 +82,83 @@
 }
 
 /* accents */
-:root[data-accent="indigo"] {
+:root[data-accent='indigo'] {
 	--theme-accent: #5b46e5;
 	--theme-accent-2: #4a36d1;
 }
-:root.dark[data-accent="indigo"] {
+:root.dark[data-accent='indigo'] {
 	--theme-accent: #8c7df7;
 	--theme-accent-2: #a396fa;
 }
-:root[data-accent="purple"] {
+:root[data-accent='purple'] {
 	--theme-accent: #7a45d6;
 	--theme-accent-2: #6835c2;
 }
-:root.dark[data-accent="purple"] {
+:root.dark[data-accent='purple'] {
 	--theme-accent: #a98df2;
 	--theme-accent-2: #bba4f6;
 }
-:root[data-accent="violet"] {
+:root[data-accent='violet'] {
 	--theme-accent: #a43bcb;
 	--theme-accent-2: #8e2db3;
 }
-:root.dark[data-accent="violet"] {
+:root.dark[data-accent='violet'] {
 	--theme-accent: #cc86ee;
 	--theme-accent-2: #d8a0f3;
 }
-:root[data-accent="blue"] {
+:root[data-accent='blue'] {
 	--theme-accent: #1d6ae0;
 	--theme-accent-2: #1858c0;
 }
-:root.dark[data-accent="blue"] {
+:root.dark[data-accent='blue'] {
 	--theme-accent: #6aa3ff;
 	--theme-accent-2: #8ab6ff;
 }
-:root[data-accent="teal"] {
+:root[data-accent='teal'] {
 	--theme-accent: #0c7f80;
 	--theme-accent-2: #0a6b6c;
 }
-:root.dark[data-accent="teal"] {
+:root.dark[data-accent='teal'] {
 	--theme-accent: #3cc4c4;
 	--theme-accent-2: #62d2d2;
 }
-:root[data-accent="mint"] {
+:root[data-accent='mint'] {
 	--theme-accent: #0b8a5e;
 	--theme-accent-2: #08744f;
 }
-:root.dark[data-accent="mint"] {
+:root.dark[data-accent='mint'] {
 	--theme-accent: #45ce97;
 	--theme-accent-2: #6adaae;
 }
-:root[data-accent="pink"] {
+:root[data-accent='pink'] {
 	--theme-accent: #d02d68;
 	--theme-accent-2: #b42358;
 }
-:root.dark[data-accent="pink"] {
+:root.dark[data-accent='pink'] {
 	--theme-accent: #f57ba6;
 	--theme-accent-2: #f899bb;
 }
-:root[data-accent="orange"] {
+:root[data-accent='orange'] {
 	--theme-accent: #d4570f;
 	--theme-accent-2: #b8490b;
 }
-:root.dark[data-accent="orange"] {
+:root.dark[data-accent='orange'] {
 	--theme-accent: #ff9152;
 	--theme-accent-2: #ffa874;
 }
-:root[data-accent="bronze"] {
+:root[data-accent='bronze'] {
 	--theme-accent: #946247;
 	--theme-accent-2: #7e523a;
 }
-:root.dark[data-accent="bronze"] {
+:root.dark[data-accent='bronze'] {
 	--theme-accent: #cfa284;
 	--theme-accent-2: #dab59c;
 }
-:root[data-accent="black"] {
+:root[data-accent='black'] {
 	--theme-accent: #1c1b26;
 	--theme-accent-2: #000000;
 }
-:root.dark[data-accent="black"] {
+:root.dark[data-accent='black'] {
 	--theme-accent: #edecf6;
 	--theme-accent-2: #ffffff;
 }
@@ -203,7 +211,8 @@
 	background-color: var(--theme-accent);
 	color: var(--theme-on-accent);
 }
-:root[data-accent]:not(.dark) :is(button, a):is(.bg-black, .bg-gray-900).text-white:not(:disabled):hover {
+:root[data-accent]:not(.dark)
+	:is(button, a):is(.bg-black, .bg-gray-900).text-white:not(:disabled):hover {
 	background-color: var(--theme-accent-2);
 }
 :root.dark[data-accent] :is(button, a).dark\:bg-white.dark\:text-black:not(:disabled) {
@@ -223,4 +232,32 @@
 }
 :root[data-accent] ::selection {
 	background-color: var(--theme-accent-soft);
+}
+
+/* ------------------------------------------------------------------
+ * Karix theme (v2 tokens, .claude/ref-html/MASS-GPT Theme Tokens v2.html BASE.karix).
+ * Navy with a FIXED soft-blue accent: accent colours apply to Light/Dark only, so the
+ * accent layer above is not applied under Karix (applyThemeAccent gets null for 'karix').
+ * (0,2,0) beats `.dark` token values.
+ * ------------------------------------------------------------------ */
+:root.karix {
+	--theme-bg: #06133a;
+	--theme-bg-2: #040d2b;
+	--theme-bg-3: #10215a;
+	--theme-surface: #0d1f55;
+	--theme-line: #1d3373;
+	--theme-line-2: #2b4388;
+	--theme-ink: #eef1fb;
+	--theme-ink-2: #c5cde8;
+	--theme-ink-3: #91a0cb;
+	--theme-ink-4: #6676a6;
+	--theme-on-accent: #081846;
+	--theme-soft-pct: 16%;
+	--theme-line-pct: 40%;
+	--theme-accent: #9db0ee;
+	--theme-accent-2: #b4c3f3;
+	--theme-side: #040d2b;
+	--theme-side-hover: #0c1c4e;
+	--theme-side-on: #142c68;
+	--theme-page: #06133a;
 }

@@ -67,8 +67,9 @@
 	};
 
 	// CUSTOM: accent follows the user's saved theme; re-applied when light/dark changes so theme-color stays in sync
+	// Karix has its own fixed accent (v2 tokens) → no accent layer under it
 	$: applyThemeAccent(
-		$settings?.appTheme ? normalizeAppTheme($settings.appTheme).accent : null,
+		$settings?.appTheme && $theme !== 'karix' ? normalizeAppTheme($settings.appTheme).accent : null,
 		$theme
 	);
 

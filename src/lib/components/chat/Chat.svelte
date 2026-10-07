@@ -3,7 +3,8 @@
 	import { toast } from 'svelte-sonner';
 
 	import { getContext, onDestroy, onMount, tick } from 'svelte';
-	import { normalizeAppTheme, themePatternImage } from '$lib/utils/themes'; // CUSTOM
+	import { KARIX_ACCENT, normalizeAppTheme, themePatternImage } from '$lib/utils/themes'; // CUSTOM
+	import { theme as themeMode } from '$lib/stores'; // CUSTOM: Karix pattern colour
 	import { refreshUsageStatus } from '$lib/stores/usage'; // CUSTOM
 	import { fade } from 'svelte/transition';
 	const i18n: Writable<i18nType> = getContext('i18n');
@@ -194,7 +195,10 @@
 	$: appTheme = $settings?.appTheme ? normalizeAppTheme($settings.appTheme) : null;
 	$: themeBackground = !embedded && !backgroundImage && appTheme && appTheme.pattern !== 'none';
 	$: themePatternLight = themeBackground && appTheme ? themePatternImage(appTheme, false) : null;
-	$: themePatternDark = themeBackground && appTheme ? themePatternImage(appTheme, true) : null;
+	$: themePatternDark =
+		themeBackground && appTheme
+			? themePatternImage(appTheme, true, $themeMode === 'karix' ? KARIX_ACCENT : undefined)
+			: null;
 
 	let atSelectedModel: Model | undefined;
 	let selectedModelIds = [];

@@ -98,11 +98,18 @@ export const normalizeAppTheme = (value: any): AppTheme => {
  * CSS `background-image` value for the pattern, or null for `none`.
  * Drawn in the accent colour at 20% × strength (light) / 30% × strength (dark), per the token file.
  */
-export const themePatternImage = (theme: AppTheme, dark: boolean): string | null => {
+/** Karix theme uses a fixed accent (v2 tokens); accent colours apply to Light/Dark only. */
+export const KARIX_ACCENT = '#9DB0EE';
+
+export const themePatternImage = (
+	theme: AppTheme,
+	dark: boolean,
+	colorOverride?: string
+): string | null => {
 	const p = PATTERNS.find(([id]) => id === theme.pattern);
 	if (!p) return null;
 	const acc = THEME_ACCENTS.find(([id]) => id === theme.accent) ?? THEME_ACCENTS[0];
-	const color = dark ? acc[3] : acc[2];
+	const color = colorOverride ?? (dark ? acc[3] : acc[2]);
 	const opacity = +(theme.strength * (dark ? 0.3 : 0.2)).toFixed(3);
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${p[2]}" height="${p[3]}" viewBox="0 0 ${p[2]} ${p[3]}"><g opacity="${opacity}">${p[4](color)}</g></svg>`;
 	return `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/"/g, '%22')}")`;

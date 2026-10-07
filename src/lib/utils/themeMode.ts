@@ -60,7 +60,7 @@ export const applyTheme = (_theme: string) => {
 						: _theme === 'her'
 							? '#983724'
 							: _theme === 'karix'
-								? '#0f2966'
+								? '#06133a'
 								: '#ffffff'
 			);
 		}
