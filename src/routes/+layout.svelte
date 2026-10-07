@@ -1,5 +1,5 @@
 <script>
-	import { brandLogoRounded } from '$lib/stores';
+	import { brandLogoRounded, brandLogoMark } from '$lib/stores'; // CUSTOM: brandLogoMark
 	import { io } from 'socket.io-client';
 	import { spring } from 'svelte/motion';
 	import { createPyodideWorker } from '$lib/pyodide/createPyodideWorker';
@@ -1388,11 +1388,9 @@
 		);
 	}
 
-	$: if (typeof document !== 'undefined' && $brandLogoRounded) {
-		document.querySelector('#app-favicon')?.setAttribute('href', $brandLogoRounded);
-		document
-			.querySelector('link[rel="apple-touch-icon"]')
-			?.setAttribute('href', $brandLogoRounded);
+	// CUSTOM: favicon = K mark, follows the theme; apple-touch-icon stays on its PNG (iOS ignores SVG)
+	$: if (typeof document !== 'undefined' && $brandLogoMark) {
+		document.querySelector('#app-favicon')?.setAttribute('href', $brandLogoMark);
 	}
 
 	onDestroy(() => {

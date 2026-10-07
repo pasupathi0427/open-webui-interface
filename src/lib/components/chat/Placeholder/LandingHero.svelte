@@ -23,7 +23,7 @@
 	).split('\u0000');
 </script>
 
-<div class="landing-greet w-full @md:max-w-3xl px-2.5 text-left">
+<div class="landing-greet w-full @md:max-w-3xl px-2.5 text-left max-md:mt-6">
 	<h1
 		class="text-[1.75rem] @sm:text-[1.5rem] leading-tight font-medium tracking-tight text-(--theme-ink)"
 	>

@@ -18,11 +18,12 @@
 	} from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { WEBUI_NAME, brandLogoCircle, config, user, socket } from '$lib/stores';
+	import { WEBUI_NAME, config, user, socket } from '$lib/stores'; // CUSTOM: brandLogoCircle → BrandWordmark
 
 	import { generateInitialsImage, canvasPixelTest, getUserTimezone } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import BrandWordmark from '$lib/components/icons/BrandWordmark.svelte'; // CUSTOM
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
 	import { redirect } from '@sveltejs/kit';
@@ -254,13 +255,10 @@
 									<!-- LICENSE covers this Open WebUI sign-in logo.
 									Do not alter, remove, obscure, or replace it except as LICENSE permits:
 									https://docs.openwebui.com/license. -->
-									<img
-										id="logo"
-										crossorigin="anonymous"
-										src={$brandLogoCircle}
-										class="size-24 rounded-full"
-										alt="{$WEBUI_NAME} logo"
-									/>
+									<!-- CUSTOM: brand wordmark (light/dark via .dark), as in the sidebar -->
+									<span id="logo"
+										><BrandWordmark className="h-12" label="{$WEBUI_NAME} logo" /></span
+									>
 								</div>
 							{/if}
 							<form
@@ -625,13 +623,8 @@
 						<!-- LICENSE covers this Open WebUI sign-in logo.
 						Do not alter, remove, obscure, or replace it except as LICENSE permits:
 						https://docs.openwebui.com/license. -->
-						<img
-							id="logo"
-							crossorigin="anonymous"
-							src={$brandLogoCircle}
-							class=" w-6 rounded-full"
-							alt=""
-						/>
+						<!-- CUSTOM: brand wordmark (light/dark via .dark), as in the sidebar -->
+						<span id="logo"><BrandWordmark className="h-6" label={$WEBUI_NAME} /></span>
 					</div>
 				</div>
 			</div>

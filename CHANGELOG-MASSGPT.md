@@ -36,6 +36,7 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/admin/Settings/General.svelte — "Chat space at a glance" switch after User Status
 - src/lib/stores/index.ts (also) — `Config.features.enable_chat_glance`
 - src/lib/components/chat/Placeholder.svelte (also) — `ChatGlance` import + gated mount above the landing heading
+- src/routes/auth/+page.svelte — BrandWordmark import; `brandLogoCircle` import dropped; both sign-in logo `<img>`s → `<span id="logo"><BrandWordmark/></span>` (LICENSE comments kept)
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -242,3 +243,20 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Cause: targetSdk 36 forces edge-to-edge; Capacitor 8 SystemBars (`insetsHandling: 'css'` default) passes the insets to the page when the viewport has `viewport-fit=cover` (and WebView ≥ 140), expecting the page to pad itself via `env(safe-area-inset-*)` / `--safe-area-inset-*`. `src/app.html` has `viewport-fit=cover` (upstream, for the iOS PWA) and the app applies no insets → content under the status bar.
 - Fix (src/app.html): tiny inline script right after the viewport meta — only when `window.Capacitor.isNativePlatform()` and platform is android, removes `viewport-fit=cover` before Capacitor checks the viewport (onPageCommitVisible) → SystemBars pads the WebView natively (status bar + navigation bar). Browsers / iOS PWA keep `cover`; no app CSS changes.
 - Verified: logic checked against node_modules/@capacitor/android 8.5.2 `SystemBars.java` (padding path when `hasViewportCover` is false). Not yet verified on a device/emulator.
+
+## [2026-10-07] Login page — brand wordmark instead of the round logo (owner request)
+- Author: Claude / reviewer: <owner>
+- src/routes/auth/+page.svelte: corner logo (default position) → `BrandWordmark` h-6; centred logo (`auth_logo_position: center`) → `BrandWordmark` h-12. Same component as the sidebar, so light/dark variants follow the `.dark` class (light, dark, OLED, Karix, system). `id="logo"` kept on the wrapper so app.html's "Her" theme rule still applies; accessible name = WEBUI_NAME.
+- Verified: svelte-check 6992 (unchanged). Not yet verified in a browser.
+
+## [2026-10-07] Mobile landing spacing (owner request)
+- Author: Claude / reviewer: <owner>
+- LandingHero.svelte root `max-md:mt-6` (more room above the greeting); Placeholder.svelte suggestions wrapper `max-md:mt-8` (was mt-2 on phones). Desktop unchanged.
+
+## [2026-10-07] Favicon → K mark (owner request)
+- Author: Claude / reviewer: <owner>
+- Files created: static/static/karix-icons/{light,black,karix}-mark.svg — reference KX_MARK (navy square + white K for light; white square + navy K for dark / Karix), pink gradient dot.
+- src/app.html: default favicon `light-mark.svg`; page-load script and OS light/dark listener use `getKarixBrandAsset(theme, 'mark')`. Bug fixed: that script also overwrote `<link rel="apple-touch-icon">` with an SVG, undoing the PNG iOS icon — removed.
+- src/lib/utils/themeMode.ts: `setThemeMode` updates the favicon immediately when the theme is changed in Settings › Appearance.
+- Not changed: PWA manifest icons / iOS PNG (wordmark), backend swagger favicon.
+- Follow-up fix: favicon flipped back to the square wordmark after load — root `src/routes/+layout.svelte` reactively set `#app-favicon` (and apple-touch-icon) to `$brandLogoRounded`. Now uses new `brandLogoMark` store (`/static/karix-icons/{variant}-mark.svg`, stores/index.ts) and no longer touches apple-touch-icon. The extra favicon update in themeMode.ts removed (the layout block already reacts to theme changes).

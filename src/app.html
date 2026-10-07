@@ -10,7 +10,7 @@
 			id="app-favicon"
 			rel="icon"
 			type="image/svg+xml"
-			href="/static/karix-icons/light-rounded.svg"
+			href="/static/karix-icons/light-mark.svg"
 			crossorigin="use-credentials"
 		/>
 		<!-- CUSTOM: iOS ignores SVG touch icons; PNG rendered from karix-icons/light-rounded.svg -->
@@ -100,11 +100,9 @@
 					metaThemeColorTag.setAttribute('content', '#171717');
 				}
 
-				const faviconHref = window.getKarixBrandAsset(localStorage.theme, 'rounded');
+				// CUSTOM: favicon = K mark (theme variant); apple-touch-icon left on its PNG (iOS ignores SVG)
+				const faviconHref = window.getKarixBrandAsset(localStorage.theme, 'mark');
 				document.querySelector('#app-favicon')?.setAttribute('href', faviconHref);
-				document
-					.querySelector('link[rel="apple-touch-icon"]')
-					?.setAttribute('href', faviconHref);
 
 				const preloadHref = window.getKarixBrandAsset(localStorage.theme, 'full');
 				const preload = document.createElement('link');
@@ -127,7 +125,7 @@
 						}
 						document
 							.querySelector('#app-favicon')
-							?.setAttribute('href', window.getKarixBrandAsset('system', 'rounded'));
+							?.setAttribute('href', window.getKarixBrandAsset('system', 'mark')); // CUSTOM: K mark
 					}
 				});
 

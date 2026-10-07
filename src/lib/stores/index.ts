@@ -63,6 +63,11 @@ export const brandLogoRounded = derived(
 	brandVariant,
 	($brandVariant) => `/static/karix-icons/${$brandVariant}-rounded.svg`
 );
+// CUSTOM: K mark (favicon), theme variant
+export const brandLogoMark = derived(
+	brandVariant,
+	($brandVariant) => `/static/karix-icons/${$brandVariant}-mark.svg`
+);
 
 export const shortCodesToEmojis = writable(
 	Object.entries(emojiShortCodes).reduce((acc, [key, value]) => {

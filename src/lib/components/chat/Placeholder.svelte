@@ -211,7 +211,7 @@
 		</div>
 	{:else}
 		<!-- CUSTOM: max-w-3xl so the suggestion cards line up with the input box (was max-w-2xl); --sc-bleed = mx-5 so the mobile card row reaches the screen edge -->
-		<div class="mx-auto max-w-3xl w-full mt-2" in:fade={{ duration: 200, delay: 200 }}>
+		<div class="mx-auto max-w-3xl w-full mt-2 max-md:mt-8" in:fade={{ duration: 200, delay: 200 }}>
 			<div class="mx-5" style="--sc-bleed: 1.25rem">
 				<Suggestions suggestionPrompts={selectedSuggestionPrompts} inputValue={prompt} {onSelect} />
 			</div>
