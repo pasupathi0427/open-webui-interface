@@ -236,3 +236,9 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Verified: svelte-check 6992 (unchanged); 390×780 headless render of the same flex/contents/order/sticky structure → input bottom = 780 (screen bottom), suggestions above it. Not yet verified on a device.
 - Follow-up: phones — top padding pt-6 → pt-14 so the glance strip clears the floating navbar; suggestion list shows the first 3 prompts only (`.sc:nth-child(n + 4) { display: none }`).
 - Follow-up: glance wrapper `-translate-y-20` (owner tweak) → `md:-translate-y-20` so the lift applies only ≥768px; on phones it pushed the strip under the floating navbar and left an empty gap above the greeting.
+
+## [2026-10-07] Capacitor Android — app drew under the status bar (owner report)
+- Author: Claude / reviewer: <owner>
+- Cause: targetSdk 36 forces edge-to-edge; Capacitor 8 SystemBars (`insetsHandling: 'css'` default) passes the insets to the page when the viewport has `viewport-fit=cover` (and WebView ≥ 140), expecting the page to pad itself via `env(safe-area-inset-*)` / `--safe-area-inset-*`. `src/app.html` has `viewport-fit=cover` (upstream, for the iOS PWA) and the app applies no insets → content under the status bar.
+- Fix (src/app.html): tiny inline script right after the viewport meta — only when `window.Capacitor.isNativePlatform()` and platform is android, removes `viewport-fit=cover` before Capacitor checks the viewport (onPageCommitVisible) → SystemBars pads the WebView natively (status bar + navigation bar). Browsers / iOS PWA keep `cover`; no app CSS changes.
+- Verified: logic checked against node_modules/@capacitor/android 8.5.2 `SystemBars.java` (padding path when `hasViewportCover` is false). Not yet verified on a device/emulator.
