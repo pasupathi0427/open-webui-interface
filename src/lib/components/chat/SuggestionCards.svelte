@@ -5,6 +5,7 @@
 	import type { Writable } from 'svelte/store';
 	import type { i18n as i18nType } from 'i18next';
 	import ArrowRight from '$lib/components/icons/ArrowRight.svelte';
+	import ChevronRight from '$lib/components/icons/ChevronRight.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
 
 	const i18n: Writable<i18nType> = getContext('i18n');
@@ -60,6 +61,9 @@
 						</span>
 					</div>
 				</div>
+				<span class="sc-chev" aria-hidden="true"
+					><ChevronRight className="size-4" strokeWidth="2" /></span
+				>
 			</button>
 		{/each}
 	</div>
@@ -68,7 +72,7 @@
 <style>
 	/* All colours come from theme tokens (src/lib/styles/theme-tokens.css). */
 	/* Layout follows the space the cards actually get (container query), as in the reference:
-	 * narrow (phone, or a squeezed panel) → 72%-wide cards in a snap-scrolling row with the next card peeking;
+	 * narrow (phone, or a squeezed panel) → plain text list (title, subtitle, chevron; no art) — see end of file;
 	 * wide (tablet / desktop) → 3 equal columns. `--sc-bleed` (set by the parent to its side padding)
 	 * lets the narrow row run to the screen edge instead of being cut off by the padding. */
 	.suggestion-cards-wrap {
@@ -347,6 +351,58 @@
 		.t-bars i {
 			animation: none;
 			opacity: 1;
+		}
+	}
+
+	.sc-chev {
+		display: none;
+	}
+	/* phones / narrow panels: reference mobile "Suggested questions" list (no illustrations) */
+	@container (max-width: 559px) {
+		.suggestion-cards {
+			grid-auto-flow: row;
+			grid-auto-columns: auto;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0;
+			overflow: visible;
+			margin-inline: 0;
+			padding: 0;
+		}
+		.sc {
+			flex-direction: row;
+			align-items: center;
+			gap: 12px;
+			border: 0;
+			border-bottom: 1px solid var(--theme-line);
+			border-radius: 0;
+			background: transparent;
+		}
+		/* phones: first 3 prompts only */
+		.sc:nth-child(n + 4) {
+			display: none;
+		}
+		.sc:nth-child(3) {
+			border-bottom: 0;
+		}
+		.sc:hover {
+			transform: none;
+			box-shadow: none;
+		}
+		.sc-thumb,
+		.sc-m .dot {
+			display: none;
+		}
+		.sc-b {
+			flex: 1;
+			padding: 12px 2px;
+		}
+		.sc-t {
+			white-space: normal;
+		}
+		.sc-chev {
+			display: block;
+			flex: none;
+			color: var(--theme-ink-4);
 		}
 	}
 </style>

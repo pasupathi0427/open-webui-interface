@@ -29,6 +29,13 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/admin/Users/Groups/EditGroupModal.svelte — `UsageTab` import, `usageGroupId`, "Usage" tab button + panel
 - src/lib/components/admin/Users/Groups/EditGroupModal.svelte (also) — tab bar `[&>button]:shrink-0 [&>button]:whitespace-nowrap` (mobile fix)
 - src/lib/components/admin/Users/Groups/GroupItem.svelte — `'usage'` added to the edit modal's tabs
+- src/lib/components/chat/Settings/General.svelte — theme row, `applyTheme`/`themeChangeHandler`, `themes`/`selectedTheme` removed (moved to `utils/themeMode.ts` + Appearance); `theme` import dropped
+- backend/open_webui/config.py — `ENABLE_CHAT_GLANCE` env + `DEFAULT_CONFIG['ui.enable_chat_glance']`
+- backend/open_webui/routers/auths.py — `ADMIN_CONFIG_KEYS['ENABLE_CHAT_GLANCE']`, `AdminConfig.ENABLE_CHAT_GLANCE: bool = False`
+- backend/open_webui/main.py (also) — `ui.enable_chat_glance` in `/api/config` get_many + `features.enable_chat_glance`
+- src/lib/components/admin/Settings/General.svelte — "Chat space at a glance" switch after User Status
+- src/lib/stores/index.ts (also) — `Config.features.enable_chat_glance`
+- src/lib/components/chat/Placeholder.svelte (also) — `ChatGlance` import + gated mount above the landing heading
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -195,3 +202,37 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Files modified: src/lib/components/chat/Usage/UsageCard.svelte (under the token count), src/lib/components/admin/Users/Groups/UsageTab.svelte (under "Members this period"), en-US translation.json (1 key).
 - Text: "Token counts are estimates and may not reflect actual API usage".
 - Follow-up: removed from the profile-menu card; in the group Usage tab moved to the bottom-right under the members list (small muted text, Analytics style).
+
+## [2026-10-06] F5 Chat space at a glance + theme picker moved to Appearance (owner request)
+- Author: Claude / reviewer: <owner>
+- F5: `src/lib/components/chat/Placeholder/ChatGlance.svelte` — reference `.qc` strip above the landing heading, horizontal snap row of `.qcc` cards (236px, 210px on phones), hover lift, tone icon tiles:
+  - Token allowance (accent): % left + ring, "used / allowance · resets in X" (`/usage/me`).
+  - Messages this week (blue): count + 7-day sparkline, "+N vs last week".
+  - Active streak (green): current streak + 7-day activity bars, "N of 7 days active · best M".
+  - Top model (violet): most-used model name, "N models used".
+  Data only from existing endpoints (`GET /users/usage?days=14`, `/usage/me`); no new backend data code.
+- Config added: `ENABLE_CHAT_GLANCE` (default **False**) → `ui.enable_chat_glance`; Admin Settings › General › "Chat space at a glance"; exposed as `features.enable_chat_glance`. No migration (falls back to DEFAULT_CONFIG).
+- Theme: light/dark mode picker moved from Settings › General to Settings › Appearance as reference `.ap` preview cards (Auto/System split preview, Light, Dark, OLED Dark, Karix, + Her when easter eggs are on); radio semantics + arrow keys. `src/lib/utils/themeMode.ts` holds General's `applyTheme` verbatim + `setThemeMode` (store + localStorage + apply) — behaviour unchanged, incl. theme-color meta and OLED overrides.
+- i18n: settings.admin.general.chatGlance.{label,description}, glance strings, Follows your device, Karix, Her.
+- Verified: svelte-check 6992 (unchanged; 0 new); backend: flag defaults False, read via admin config, saved via `Config.upsert` — passed. Not yet verified in a browser.
+
+## [2026-10-06] Settings window + theme card size (owner feedback)
+- Author: Claude / reviewer: <owner>
+- src/lib/components/chat/SettingsModal.svelte — `!max-w-[80rem] h-[min(max(54rem,80dvh),...)]` → `!max-w-[920px] h-[min(680px,calc(100dvh-4rem))]` (reference `.modal.set` 920×680).
+- src/lib/components/chat/Settings/Appearance.svelte — theme cards use `.ap-grid` (auto-fill, each card 7.5rem–9.5rem wide via `--ap-min` / `--ap-max`; 16:10 height).
+
+## [2026-10-06] Landing — greeting only (owner request)
+- Author: Claude / reviewer: <owner>
+- src/lib/components/chat/Placeholder/LandingHero.svelte — now only "Good morning/afternoon/evening, <first name>" (green dot eyebrow, as an h1). Removed model tile, model name, description tooltip, "By" author line, multi-model tile switcher.
+- src/lib/components/chat/Placeholder.svelte — `<LandingHero />` (props dropped).
+- Note: with several models selected, the landing no longer has the tile to pick whose prompt suggestions show; suggestions follow the first model (selectedModelIdx 0), as in the chat-input selector.
+- Follow-up (owner: warmer, more visible): greeting is now a 28px (34px ≥sm) semibold heading, first name capitalised and tinted with the accent, plus a welcome line "It's good to see you. What shall we work on today?". Name split via a placeholder so translations keep their own word order.
+
+## [2026-10-06] Mobile landing — two-up glance, suggestions as list, input at the bottom (owner request)
+- Author: Claude / reviewer: <owner>
+- src/lib/components/chat/Placeholder/ChatGlance.svelte — `.glance` is a size container; ≤559px wide: exactly two cards in view (`calc((100% - 10px)/2)`), rest swipe in; smaller padding/icon/value, mini charts hidden to fit.
+- src/lib/components/chat/SuggestionCards.svelte — ≤559px container: plain text list (title, subtitle, chevron, dividers; no illustration, no dot), no horizontal scroll. Wide layout (3 cards) unchanged. New ChevronRight import + `.sc-chev`.
+- src/lib/components/chat/Placeholder.svelte — phones only (`max-md:`): root becomes a full-height flex column (`min-h-full`, no translate, pt-6), the two inner wrappers become `display: contents`, and the input wrapper is `order-last mt-auto sticky bottom-0 z-10` with safe-area bottom padding → order: glance, greeting, suggestions, input docked at the bottom. ≥768px markup/behaviour unchanged.
+- Verified: svelte-check 6992 (unchanged); 390×780 headless render of the same flex/contents/order/sticky structure → input bottom = 780 (screen bottom), suggestions above it. Not yet verified on a device.
+- Follow-up: phones — top padding pt-6 → pt-14 so the glance strip clears the floating navbar; suggestion list shows the first 3 prompts only (`.sc:nth-child(n + 4) { display: none }`).
+- Follow-up: glance wrapper `-translate-y-20` (owner tweak) → `md:-translate-y-20` so the lift applies only ≥768px; on phones it pushed the strip under the floating navbar and left an empty gap above the greeting.

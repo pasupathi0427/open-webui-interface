@@ -3,7 +3,8 @@
 	// .claude/ref-html "Appearance" panel). Every change saves and applies immediately.
 	import { getContext } from 'svelte';
 
-	import { settings } from '$lib/stores';
+	import { config, settings, theme } from '$lib/stores';
+	import { setThemeMode } from '$lib/utils/themeMode';
 	import {
 		DEFAULT_APP_THEME,
 		THEME_ACCENTS,
@@ -22,6 +23,27 @@
 	const i18n: any = getContext('i18n');
 
 	export let saveSettings: Function;
+
+	// Theme mode cards (reference `.ap` previews). Preview colours are artwork, not tokens:
+	// [bg, sidebar first, sidebar, panel, line]
+	type Mode = { id: string; label: string; sub?: string; c: string[]; c2?: string[] };
+	const LIGHT = ['#E7E7EE', '#1C1B26', '#FFFFFF', '#FFFFFF', '#E3E2EC'];
+	const DARK = ['#1E1D2B', '#EEEDF7', '#2E2D40', '#12111C', '#2E2D40'];
+	$: modes = [
+		{ id: 'system', label: 'Auto', sub: 'Follows your device', c: LIGHT, c2: DARK },
+		{ id: 'light', label: 'Light', c: LIGHT },
+		{ id: 'dark', label: 'Dark', c: DARK },
+		{
+			id: 'oled-dark',
+			label: 'OLED Dark',
+			c: ['#0D0D0D', '#EEEEEE', '#1A1A1A', '#000000', '#222222']
+		},
+		{ id: 'karix', label: 'Karix', c: ['#0F2966', '#EEF1F7', '#1C3A80', '#020A24', '#1C3A80'] },
+		...($config?.features?.enable_easter_eggs
+			? [{ id: 'her', label: 'Her', c: ['#F6E7E0', '#983724', '#FFFFFF', '#FFFFFF', '#ECD5CC'] }]
+			: [])
+	] as Mode[];
+	$: currentMode = $theme ?? 'system';
 
 	$: appTheme = $settings?.appTheme ? normalizeAppTheme($settings.appTheme) : null;
 	// Slider value shown while dragging; saved on release.
@@ -80,7 +102,10 @@
 			></div>
 			{#if previewLight}
 				<div class="absolute inset-0 dark:hidden" style="background-image: {previewLight}"></div>
-				<div class="absolute inset-0 hidden dark:block" style="background-image: {previewDark}"></div>
+				<div
+					class="absolute inset-0 hidden dark:block"
+					style="background-image: {previewDark}"
+				></div>
 			{/if}
 			<div class="relative ml-[20%] flex h-full flex-col justify-between p-3.5">
 				<div
@@ -101,6 +126,49 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Theme mode (moved here from General) -->
+		<section class="flex flex-col gap-3" aria-labelledby="appearance-mode-label">
+			<div id="appearance-mode-label" class={sectionLabel}>{$i18n.t('Theme')}</div>
+			<div class="ap-grid" role="radiogroup" aria-labelledby="appearance-mode-label">
+				{#each modes as mode}
+					{@const checked = currentMode === mode.id}
+					<button
+						type="button"
+						role="radio"
+						aria-checked={checked}
+						tabindex={checked ? 0 : -1}
+						class="ap group flex min-w-0 flex-col items-center gap-2 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--theme-accent) {checked
+							? 'font-medium text-gray-900 dark:text-white'
+							: 'text-gray-500 dark:text-gray-400'}"
+						on:click={() => setThemeMode(mode.id)}
+						on:keydown={onRadioKeydown}
+					>
+						<span class="ap-prev" class:on={checked}>
+							{#each mode.c2 ? [mode.c, mode.c2] : [mode.c] as c}
+								<span class="ap-half" style="background: {c[0]}">
+									<span class="ap-s">
+										<i style="background: {c[1]}"></i><i style="background: {c[2]}"></i><i
+											style="background: {c[2]}"
+										></i>
+									</span>
+									<span class="ap-p" style="background: {c[3]}">
+										<i style="background: {c[4]}; width: 62%"></i><i style="background: {c[4]}"></i>
+										<i class="a"></i>
+									</span>
+								</span>
+							{/each}
+						</span>
+						<span class="truncate max-w-full">{$i18n.t(mode.label)}</span>
+						{#if mode.sub}
+							<span class="-mt-2 text-[0.6875rem] font-normal text-gray-400"
+								>{$i18n.t(mode.sub)}</span
+							>
+						{/if}
+					</button>
+				{/each}
+			</div>
+		</section>
 
 		<!-- Accent colour -->
 		<section class="flex flex-col gap-3" aria-labelledby="appearance-accent-label">
@@ -237,3 +305,76 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	/* Theme cards: each card is between --ap-min and --ap-max wide (height follows 16:10). */
+	.ap-grid {
+		--ap-min: 7.5rem;
+		--ap-max: 9.5rem;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(var(--ap-min), var(--ap-max)));
+		gap: 0.75rem;
+	}
+	/* reference `.ap-prev` theme previews */
+	.ap-prev {
+		display: flex;
+		width: 100%;
+		aspect-ratio: 16 / 10;
+		overflow: hidden;
+		border-radius: 14px;
+		border: 2px solid transparent;
+		box-shadow: inset 0 0 0 1px var(--theme-line-2);
+		transition:
+			border-color 0.2s,
+			transform 0.2s var(--theme-ease);
+	}
+	.ap:hover .ap-prev {
+		transform: translateY(-2px);
+	}
+	.ap-prev.on {
+		border-color: var(--theme-ink);
+		box-shadow: none;
+	}
+	.ap-half {
+		flex: 1;
+		display: flex;
+		gap: 6px;
+		min-width: 0;
+		padding: 8px;
+	}
+	.ap-s {
+		width: 22%;
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+	}
+	.ap-s i {
+		display: block;
+		height: 14%;
+		border-radius: 4px;
+	}
+	.ap-p {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 8px;
+		border-radius: 8px;
+		min-width: 0;
+	}
+	.ap-p i {
+		display: block;
+		height: 9%;
+		border-radius: 3px;
+	}
+	.ap-p i.a {
+		width: 40%;
+		margin-top: auto;
+		background: var(--theme-accent);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.ap-prev {
+			transition: none;
+		}
+	}
+</style>

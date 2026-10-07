@@ -390,6 +390,14 @@
 				>
 					<Switch bind:state={adminConfig.ENABLE_USER_STATUS} ariaLabelledbyId={labelId} />
 				</AdminSettingRow>
+				<!-- CUSTOM: "Chat space at a glance" strip on the landing page (default off) -->
+				<AdminSettingRow
+					label={$i18n.t('settings.admin.general.chatGlance.label')}
+					description={$i18n.t('settings.admin.general.chatGlance.description')}
+					let:labelId
+				>
+					<Switch bind:state={adminConfig.ENABLE_CHAT_GLANCE} ariaLabelledbyId={labelId} />
+				</AdminSettingRow>
 
 				<AdminSettingField
 					label={$i18n.t('settings.admin.general.responseWatermark.label')}

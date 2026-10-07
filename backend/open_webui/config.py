@@ -2050,6 +2050,8 @@ AUTOMATION_AUTH_TOKEN_EXPIRES_IN = os.getenv('AUTOMATION_AUTH_TOKEN_EXPIRES_IN',
 ENABLE_NOTES = os.getenv('ENABLE_NOTES', 'True').lower() == 'true'
 
 ENABLE_USER_STATUS = os.getenv('ENABLE_USER_STATUS', 'True').lower() == 'true'
+# CUSTOM: "Chat space at a glance" strip on the landing page (admin toggle, default off)
+ENABLE_CHAT_GLANCE = os.getenv('ENABLE_CHAT_GLANCE', 'False').lower() == 'true'
 
 ENABLE_EVALUATION_ARENA_MODELS = os.getenv('ENABLE_EVALUATION_ARENA_MODELS', 'True').lower() == 'true'
 try:
@@ -3121,6 +3123,7 @@ DEFAULT_CONFIG = {
     'automations.auth_token_expires_in': AUTOMATION_AUTH_TOKEN_EXPIRES_IN,
     'notes.enable': ENABLE_NOTES,
     'users.enable_status': ENABLE_USER_STATUS,
+    'ui.enable_chat_glance': ENABLE_CHAT_GLANCE,  # CUSTOM
     'evaluation.arena.enable': ENABLE_EVALUATION_ARENA_MODELS,
     'evaluation.arena.models': EVALUATION_ARENA_MODELS,
     'webhook_url': WEBHOOK_URL,

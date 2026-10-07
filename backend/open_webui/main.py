@@ -2297,6 +2297,7 @@ async def get_app_config(request: Request):
         'ui.enable_message_rating',
         'ui.enable_user_webhooks',
         'users.enable_status',
+        'ui.enable_chat_glance',  # CUSTOM
         'google_drive.enable',
         'onedrive.enable',
         'memories.enable',
@@ -2385,6 +2386,7 @@ async def get_app_config(request: Request):
                     'enable_message_rating': config.get('ui.enable_message_rating'),
                     'enable_user_webhooks': config.get('ui.enable_user_webhooks'),
                     'enable_user_status': config.get('users.enable_status'),
+                    'enable_chat_glance': config.get('ui.enable_chat_glance'),  # CUSTOM
                     'enable_admin_export': ENABLE_ADMIN_EXPORT,
                     'enable_admin_chat_access': ENABLE_ADMIN_CHAT_ACCESS,
                     'enable_admin_analytics': ENABLE_ADMIN_ANALYTICS,

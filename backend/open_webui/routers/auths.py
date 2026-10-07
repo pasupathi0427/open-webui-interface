@@ -130,6 +130,7 @@ ADMIN_CONFIG_KEYS = {
     'ENABLE_NOTES': 'notes.enable',
     'ENABLE_USER_WEBHOOKS': 'ui.enable_user_webhooks',
     'ENABLE_USER_STATUS': 'users.enable_status',
+    'ENABLE_CHAT_GLANCE': 'ui.enable_chat_glance',  # CUSTOM
     'PENDING_USER_OVERLAY_TITLE': 'ui.pending_user_overlay_title',
     'PENDING_USER_OVERLAY_CONTENT': 'ui.pending_user_overlay_content',
     'RESPONSE_WATERMARK': 'ui.watermark',
@@ -1235,6 +1236,7 @@ class AdminConfig(BaseModel):
     ENABLE_NOTES: bool
     ENABLE_USER_WEBHOOKS: bool
     ENABLE_USER_STATUS: bool
+    ENABLE_CHAT_GLANCE: bool = False  # CUSTOM
     PENDING_USER_OVERLAY_TITLE: str | None = None
     PENDING_USER_OVERLAY_CONTENT: str | None = None
     RESPONSE_WATERMARK: str | None = None

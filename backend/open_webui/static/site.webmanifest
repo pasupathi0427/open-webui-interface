@@ -1,0 +1,21 @@
+{
+  "name": "Karix",
+  "short_name": "Karix",
+  "icons": [
+    {
+      "src": "/static/karix-icons/light-rounded.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/karix-icons/light-rounded.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}

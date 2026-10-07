@@ -35,6 +35,7 @@
 	import FolderPlaceholder from './Placeholder/FolderPlaceholder.svelte';
 	import FolderTitle from './Placeholder/FolderTitle.svelte';
 	import LandingHero from './Placeholder/LandingHero.svelte'; // CUSTOM
+	import ChatGlance from './Placeholder/ChatGlance.svelte'; // CUSTOM
 
 	const i18n: any = getContext('i18n');
 
@@ -114,7 +115,10 @@
 		!$selectedFolder.write_access;
 </script>
 
-<div class="m-auto w-full max-w-[58rem] px-1 @2xl:px-20 translate-y-6 py-24 text-center">
+<!-- CUSTOM (phones): one full-height column, chat input docked at the bottom (reference mobile) -->
+<div
+	class="m-auto w-full max-w-[58rem] px-1 @2xl:px-20 translate-y-6 py-24 text-center max-md:m-0 max-md:self-stretch max-md:min-h-full max-md:flex max-md:flex-col max-md:translate-y-0 max-md:pt-14 max-md:pb-0"
+>
 	{#if $temporaryChatEnabled}
 		<Tooltip
 			content={$i18n.t("This chat won't appear in history and your messages will not be saved.")}
@@ -127,8 +131,10 @@
 		</Tooltip>
 	{/if}
 
-	<div class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4">
-		<div class="w-full flex flex-col justify-center items-center">
+	<div
+		class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4 max-md:contents"
+	>
+		<div class="w-full flex flex-col justify-center items-center max-md:contents">
 			{#if $selectedFolder}
 				<FolderTitle
 					folder={$selectedFolder}
@@ -143,16 +149,19 @@
 					}}
 				/>
 			{:else}
-				<!-- CUSTOM: reference landing heading (greeting, model tile, title, description) -->
-				<LandingHero
-					{models}
-					bind:selectedModelIdx
-					{selectedModelName}
-					{selectedModelDescription}
-				/>
+				<!-- CUSTOM: "Chat space at a glance" (admin toggle) -->
+				{#if $config?.features?.enable_chat_glance}
+					<div class="w-full @md:max-w-3xl mb-6 md:-translate-y-20"><ChatGlance /></div>
+				{/if}
+				<!-- CUSTOM: landing greeting (reference .lp-eyebrow) -->
+				<LandingHero />
 			{/if}
 
-			<div class="text-base font-normal @md:max-w-3xl w-full py-3 {atSelectedModel ? 'mt-2' : ''}">
+			<div
+				class="text-base font-normal @md:max-w-3xl w-full py-3 {atSelectedModel
+					? 'mt-2'
+					: ''} max-md:order-last max-md:mt-auto max-md:sticky max-md:bottom-0 max-md:z-10 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+			>
 				{#if !($selectedFolder && folderReadOnly)}
 					<MessageInput
 						bind:this={messageInput}

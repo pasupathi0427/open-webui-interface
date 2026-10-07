@@ -23,7 +23,7 @@ export type AppTheme = {
 	strength: number;
 };
 
-export const DEFAULT_APP_THEME: AppTheme = { accent: 'indigo', pattern: 'none', strength: 0.5 };
+export const DEFAULT_APP_THEME: AppTheme = { accent: 'indigo', pattern: 'none', strength: 0.2 };
 
 /** [id, label, light accent, dark accent] */
 export const THEME_ACCENTS: [ThemeAccentId, string, string, string][] = [
