@@ -278,3 +278,10 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Kept (still referenced, still the OI logo): static/static/favicon.png (chat-list fallback image; backend copies it at startup), static/favicon.png (root `/favicon.png`, backend image allow-list), static/static/splash.png ("Her" theme splash in app.html; backend copies it).
 - Kept (not OI logos): map markers, user.png, image-placeholder.png; unused Karix files (karix-logo.png, karix-name.webp, karix-wordmark.png, site.webmanifest).
 - Note: backend/open_webui/static/* is regenerated from static/static at startup — remove stale copies there if an old build left them.
+
+## [2026-10-07] Android launcher icon → Karix wordmark (owner request)
+- Author: Claude / reviewer: <owner>
+- android/app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.png, ic_launcher_round.png, ic_launcher_foreground.png regenerated (15 files) from the Karix wordmark: adaptive foreground = wordmark at 48% of the 108dp layer (inside the 66dp safe zone) on the existing white background colour; legacy = white rounded square (72%) / white circle (64%).
+- Files created: resources/android-icon/{wordmark.svg, wordmark.png, make_icons.py, preview.png} — `python resources/android-icon/make_icons.py` regenerates them (android/ is git-ignored, and `npx cap add android` would restore Capacitor defaults).
+- Not changed: app label (`app_name` in strings.xml / capacitor.config `appName`).
+- Verified: preview render (adaptive circle mask, legacy square, legacy round). Needs a reinstall on the device to show.
