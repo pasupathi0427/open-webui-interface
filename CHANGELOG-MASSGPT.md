@@ -302,3 +302,11 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Android icon → K mark: resources/android-icon/make_icons.py rewritten (k-glyph.svg/png master; wordmark masters removed). Adaptive: navy #160E7A background (values/ic_launcher_background.xml) + white K foreground at 0.58 of the 108dp layer; legacy: navy rounded square (rx 14/64) / navy circle. 15 mipmap PNGs regenerated.
 - Verified: backend compiles; svelte-check 6992 (unchanged); icon preview render. Not yet verified in a browser / on device.
 - Follow-up (owner: group looked too heavy): `.tool-group` collapsed = no border/background, aligned with single tool-call lines (negative inline margin offsets its padding); expanded (`class:open`) = light 1px line border, radius 12px. Transitions on border/padding.
+
+## [2026-10-08] Android launch screen → "karix" wordmark; launcher stays "K" (owner request)
+- Author: Claude / reviewer: <owner>
+- Cause: Android 12+ system splash shows the launcher icon when the launch theme sets no splash icon (now the K); older splash images were still Capacitor's default.
+- android/app/src/main/res/values/styles.xml `AppTheme.NoActionBarLaunch`: + `windowSplashScreenBackground` #FFFFFF, `windowSplashScreenAnimatedIcon` @drawable/splash_icon, `postSplashScreenTheme` @style/AppTheme.NoActionBar.
+- Files created/regenerated: drawable-{mdpi..xxxhdpi}/splash_icon.png (288dp canvas, wordmark 60% wide, inside the 192dp circle); all 11 drawable*/splash.png → white with centred wordmark (sizes kept). Launcher mipmaps unchanged (K).
+- resources/android-icon/make_icons.py now also builds the launch screen (wordmark.svg/png master restored) and rewrites the launch style — one command regenerates icon + splash.
+- Verified: generated splash preview. Needs reinstall on device.

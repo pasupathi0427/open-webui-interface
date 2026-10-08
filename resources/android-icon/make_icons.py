@@ -1,8 +1,11 @@
-# Generates the Android launcher icons (android/app/src/main/res/mipmap-*) from the Karix "K" mark.
-# Run from the repo root:  python resources/android-icon/make_icons.py
-# k-glyph.png = transparent render of k-glyph.svg (white K + pink dot, reference KX_MARK, 64-unit canvas).
-# Adaptive icon: background colour NAVY (values/ic_launcher_background.xml) + white K foreground,
-# scaled so the K stays inside the 66dp safe zone. Legacy: navy rounded square / navy circle with the K.
+# Generates the Android app icons from the Karix artwork. Run from the repo root:
+#   python resources/android-icon/make_icons.py
+# - Launcher icon (mipmap-*) = "K" mark. k-glyph.png = transparent render of k-glyph.svg (white K + pink dot,
+#   reference KX_MARK). Adaptive: NAVY background colour + white K foreground inside the 66dp safe zone;
+#   legacy: navy rounded square / navy circle.
+# - Launch screen = "karix" wordmark on white. wordmark.png = transparent render of wordmark.svg (KX_LOGO light):
+#   drawable-*/splash_icon.png (Android 12+ splash icon, 288dp canvas, inside the 192dp circle) and the
+#   older full-screen drawable*/splash.png. styles.xml's launch theme points at splash_icon.
 import sys
 
 from PIL import Image, ImageDraw
@@ -65,3 +68,44 @@ for i, im in enumerate(
 ):
     prev.alpha_composite(im.convert('RGBA'), (i * 220 + 14, 14))
 prev.save(S + '/preview.png')  # visual check
+
+# ---------- launch screen: "karix" wordmark ----------
+import glob, os
+
+wm = Image.open(S + '/wordmark.png').convert('RGBA')
+assert wm.getpixel((0, 0))[3] == 0, 'wordmark master must be transparent'
+wm = wm.crop(wm.getbbox())
+
+
+def put_wordmark(canvas, width_px):
+    W, H = canvas.size
+    h = round(wm.size[1] * width_px / wm.size[0])
+    canvas.alpha_composite(wm.resize((width_px, h), Image.LANCZOS), ((W - width_px) // 2, (H - h) // 2))
+    return canvas
+
+
+# Android 12+ splash icon: 288dp square, content must fit the 192dp circle → wordmark 60% wide
+for dens, scale in {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}.items():
+    n = int(288 * scale)
+    os.makedirs(f'{RES}/drawable-{dens}', exist_ok=True)
+    put_wordmark(Image.new('RGBA', (n, n), (0, 0, 0, 0)), int(n * 0.6)).save(
+        f'{RES}/drawable-{dens}/splash_icon.png', optimize=True
+    )
+
+# older devices / window background: full-screen white with the wordmark (keeps each file's size)
+for f in glob.glob(f'{RES}/drawable*/splash.png'):
+    W, H = Image.open(f).size
+    put_wordmark(Image.new('RGBA', (W, H), 'white'), int(min(W, H) * 0.42)).convert('RGB').save(f, optimize=True)
+
+styles = f'{RES}/values/styles.xml'
+xml = open(styles, encoding='utf-8').read()
+launch = '''    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>'''
+start = xml.index('    <style name="AppTheme.NoActionBarLaunch"')
+end = xml.index('</style>', start) + len('</style>')
+open(styles, 'w', encoding='utf-8').write(xml[:start] + launch + xml[end:])
+print('launch screen: splash_icon x5, splash.png x', len(glob.glob(f'{RES}/drawable*/splash.png')), ', styles.xml updated')
