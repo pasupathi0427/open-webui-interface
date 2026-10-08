@@ -37,6 +37,8 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/stores/index.ts (also) — `Config.features.enable_chat_glance`
 - src/lib/components/chat/Placeholder.svelte (also) — `ChatGlance` import + gated mount above the landing heading
 - src/routes/auth/+page.svelte — BrandWordmark import; `brandLogoCircle` import dropped; both sign-in logo `<img>`s → `<span id="logo"><BrandWordmark/></span>` (LICENSE comments kept)
+- src/lib/components/chat/Messages/ResponseMessage.svelte — model logo column and model name wrapped in `features.enable_response_model_logo` / `enable_response_model_name` checks (display only)
+- src/lib/components/common/ToolCallDisplay.svelte, src/lib/components/chat/Messages/Markdown/ConsecutiveDetailsGroup.svelte — status icon wrappers → `tool-status` chips (Check instead of CheckCircle), single rotating ChevronDown (`tool-chevron`), slide 300→240ms; group root `tool-group` + content `tool-group-body`. Logic, approvals, embeds unchanged.
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
@@ -285,3 +287,18 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Files created: resources/android-icon/{wordmark.svg, wordmark.png, make_icons.py, preview.png} — `python resources/android-icon/make_icons.py` regenerates them (android/ is git-ignored, and `npx cap add android` would restore Capacitor defaults).
 - Not changed: app label (`app_name` in strings.xml / capacitor.config `appName`).
 - Verified: preview render (adaptive circle mask, legacy square, legacy round). Needs a reinstall on the device to show.
+
+## [2026-10-07] "Her" theme splash → Karix wordmark (owner report)
+- Author: Claude / reviewer: <owner>
+- Cause: in the "Her" theme (easter eggs on), app.html hides the Karix splash logo and shows `#logo-her` = Open WebUI `static/splash.png` (OI), colour-inverted, on #983724.
+- Fix: files created static/static/karix-icons/wordmark-white.svg (reference KX_LOGO dark variant: white letters, gradient dot, transparent). src/app.html `#logo-her` → that SVG (width min(20rem, 80vw)); `filter: invert(1)` removed. Progress bar unchanged.
+- static/static/splash.png is no longer used by the app shell (backend config.py still copies it at startup; left in place).
+- Verified: render of the white wordmark on #983724.
+
+## [2026-10-08] F6 response header toggles (default off), Claude-style tool calls, Android K icon (owner request)
+- Author: Claude / reviewer: <owner>
+- F6: `ENABLE_RESPONSE_MODEL_NAME`, `ENABLE_RESPONSE_MODEL_LOGO` (both default **False**, owner override of the plan's "both ON") → `ui.enable_response_model_name|logo` → Admin Settings › General "Model name on responses" / "Model logo on responses" → `features.enable_response_model_name|logo`. ResponseMessage hides the logo column / name line when off; message data and actions untouched. Files: config.py, routers/auths.py, main.py, stores/index.ts, admin/Settings/General.svelte, ResponseMessage.svelte, en-US (4 keys).
+- Tool calls (styling only, theme-tokens.css "tool-call UI" block): soft status chips (green ✓ / rose ✕ at 14% tint, 18px), rotating chevron (0.22s), 240ms slide; consecutive tool calls grouped in a rounded bordered box with a divider above the expanded list. Spinner, approve/deny buttons, iframe embeds, results unchanged.
+- Android icon → K mark: resources/android-icon/make_icons.py rewritten (k-glyph.svg/png master; wordmark masters removed). Adaptive: navy #160E7A background (values/ic_launcher_background.xml) + white K foreground at 0.58 of the 108dp layer; legacy: navy rounded square (rx 14/64) / navy circle. 15 mipmap PNGs regenerated.
+- Verified: backend compiles; svelte-check 6992 (unchanged); icon preview render. Not yet verified in a browser / on device.
+- Follow-up (owner: group looked too heavy): `.tool-group` collapsed = no border/background, aligned with single tool-call lines (negative inline margin offsets its padding); expanded (`class:open`) = light 1px line border, radius 12px. Transitions on border/padding.

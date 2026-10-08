@@ -261,3 +261,54 @@
 	--theme-side-on: #142c68;
 	--theme-page: #06133a;
 }
+
+/* ------------------------------------------------------------------
+ * CUSTOM: tool-call UI (ToolCallDisplay, ConsecutiveDetailsGroup) — Claude-style:
+ * soft status chips, rotating chevron, grouped calls in a bordered box. Styling only.
+ * ------------------------------------------------------------------ */
+.tool-status {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 18px;
+	height: 18px;
+	border-radius: 999px;
+}
+.tool-status-ok {
+	color: var(--theme-tone-green);
+	background: color-mix(in srgb, var(--theme-tone-green) 14%, transparent);
+}
+.tool-status-err {
+	color: var(--theme-tone-rose);
+	background: color-mix(in srgb, var(--theme-tone-rose) 14%, transparent);
+}
+.tool-chevron {
+	transition: transform 0.22s var(--theme-ease);
+}
+.tool-chevron.open {
+	transform: rotate(180deg);
+}
+/* collapsed: reads like any other tool-call line; expanded: a light box around the list */
+.tool-group {
+	border: 1px solid transparent;
+	border-radius: 12px;
+	margin-inline: -8px;
+	padding: 2px 8px;
+	transition:
+		border-color 0.22s var(--theme-ease),
+		padding 0.22s var(--theme-ease);
+}
+.tool-group.open {
+	border-color: var(--theme-line);
+	padding-block: 6px;
+}
+.tool-group-body {
+	margin-top: 6px;
+	padding-top: 4px;
+	border-top: 1px solid var(--theme-line);
+}
+@media (prefers-reduced-motion: reduce) {
+	.tool-chevron {
+		transition: none;
+	}
+}

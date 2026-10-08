@@ -378,6 +378,8 @@ type Config = {
 	features: {
 		slim?: boolean;
 		enable_chat_glance?: boolean; // CUSTOM
+		enable_response_model_name?: boolean; // CUSTOM
+		enable_response_model_logo?: boolean; // CUSTOM
 		auth: boolean;
 		auth_trusted_header: boolean;
 		enable_api_keys: boolean;

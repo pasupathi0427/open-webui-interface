@@ -10,11 +10,10 @@
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
-	import ChevronUp from '../icons/ChevronUp.svelte';
 	import ChevronDown from '../icons/ChevronDown.svelte';
 	import Spinner from './Spinner.svelte';
 	import WrenchSolid from '../icons/WrenchSolid.svelte';
-	import CheckCircle from '../icons/CheckCircle.svelte';
+	import Check from '../icons/Check.svelte'; // CUSTOM: soft status chip
 	import XMark from '../icons/XMark.svelte';
 	import Image from './Image.svelte';
 	import FullHeightIframe from './FullHeightIframe.svelte';
@@ -213,16 +212,16 @@
 						<Spinner className="size-4" />
 					</div>
 				{:else if isRejected}
-					<div class="text-red-400 dark:text-red-500">
-						<XMark className="size-4" strokeWidth="2.5" />
+					<div class="tool-status tool-status-err">
+						<XMark className="size-3" strokeWidth="2.5" />
 					</div>
 				{:else if isError}
-					<div class="text-red-500 dark:text-red-400">
-						<XMark className="size-4" strokeWidth="2.5" />
+					<div class="tool-status tool-status-err">
+						<XMark className="size-3" strokeWidth="2.5" />
 					</div>
 				{:else if isDone}
-					<div class="text-emerald-500 dark:text-emerald-400">
-						<CheckCircle className="size-4" strokeWidth="2" />
+					<div class="tool-status tool-status-ok">
+						<Check className="size-3" strokeWidth="3" />
 					</div>
 				{:else}
 					<div class="text-gray-400 dark:text-gray-500">
@@ -273,19 +272,15 @@
 					</span>
 				{:else}
 					<!-- Chevron -->
-					<div class="flex shrink-0 self-center translate-y-[1px]">
-						{#if open}
-							<ChevronUp strokeWidth="3.5" className="size-3" />
-						{:else}
-							<ChevronDown strokeWidth="3.5" className="size-3" />
-						{/if}
+					<div class="flex shrink-0 self-center translate-y-[1px] tool-chevron" class:open>
+						<ChevronDown strokeWidth="3.5" className="size-3" />
 					</div>
 				{/if}
 			</div>
 		</div>
 
 		{#if open}
-			<div transition:slide={{ duration: 300, easing: quintOut, axis: 'y' }}>
+			<div transition:slide={{ duration: 240, easing: quintOut, axis: 'y' }}>
 				<div
 					class="border border-gray-50 dark:border-gray-850/30 rounded-2xl my-1.5 p-2.5 space-y-2"
 				>

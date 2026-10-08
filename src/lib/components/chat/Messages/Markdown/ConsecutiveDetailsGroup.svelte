@@ -6,11 +6,10 @@
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
-	import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import Sparkles from '$lib/components/icons/Sparkles.svelte';
-	import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
+	import Check from '$lib/components/icons/Check.svelte'; // CUSTOM: soft status chip
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import FullHeightIframe from '$lib/components/common/FullHeightIframe.svelte';
 
@@ -177,7 +176,8 @@
 	$: prefixText = hasActiveToolCalls ? $i18n.t('Exploring') : $i18n.t('Explored');
 </script>
 
-<div {id} class="w-full min-w-0">
+<!-- CUSTOM: grouped tool calls — plain line when collapsed, light box when expanded (Claude style) -->
+<div {id} class="w-full min-w-0 tool-group" class:open>
 	<div class="flex w-full min-w-0 items-center gap-2">
 		<div
 			role="button"
@@ -204,16 +204,16 @@
 						<Spinner className="size-4" />
 					</div>
 				{:else if hasRejected}
-					<div class="text-red-400 dark:text-red-500">
-						<XMark className="size-4" strokeWidth="2.5" />
+					<div class="tool-status tool-status-err">
+						<XMark className="size-3" strokeWidth="2.5" />
 					</div>
 				{:else if toolCallCount > 0 && hasError}
-					<div class="text-red-500 dark:text-red-400">
-						<XMark className="size-4" strokeWidth="2.5" />
+					<div class="tool-status tool-status-err">
+						<XMark className="size-3" strokeWidth="2.5" />
 					</div>
 				{:else if toolCallCount > 0}
-					<div class="text-emerald-500 dark:text-emerald-400">
-						<CheckCircle className="size-4" strokeWidth="2" />
+					<div class="tool-status tool-status-ok">
+						<Check className="size-3" strokeWidth="3" />
 					</div>
 				{:else}
 					<div class="text-gray-400 dark:text-gray-500">
@@ -253,12 +253,11 @@
 					</span>
 				{:else}
 					<!-- Chevron -->
-					<div class="flex shrink-0 self-center text-gray-400 dark:text-gray-500">
-						{#if open}
-							<ChevronUp strokeWidth="3.5" className="size-3" />
-						{:else}
-							<ChevronDown strokeWidth="3.5" className="size-3" />
-						{/if}
+					<div
+						class="flex shrink-0 self-center text-gray-400 dark:text-gray-500 tool-chevron"
+						class:open
+					>
+						<ChevronDown strokeWidth="3.5" className="size-3" />
 					</div>
 				{/if}
 			</div>
@@ -299,8 +298,8 @@
 	{/if}
 
 	{#if open}
-		<div transition:slide={{ duration: 300, easing: quintOut, axis: 'y' }}>
-			<div class="mb-1">
+		<div transition:slide={{ duration: 240, easing: quintOut, axis: 'y' }}>
+			<div class="mb-1 tool-group-body">
 				<slot name="content" />
 			</div>
 		</div>

@@ -398,6 +398,21 @@
 				>
 					<Switch bind:state={adminConfig.ENABLE_CHAT_GLANCE} ariaLabelledbyId={labelId} />
 				</AdminSettingRow>
+				<!-- CUSTOM: model name / logo above assistant responses (default off) -->
+				<AdminSettingRow
+					label={$i18n.t('settings.admin.general.responseModelName.label')}
+					description={$i18n.t('settings.admin.general.responseModelName.description')}
+					let:labelId
+				>
+					<Switch bind:state={adminConfig.ENABLE_RESPONSE_MODEL_NAME} ariaLabelledbyId={labelId} />
+				</AdminSettingRow>
+				<AdminSettingRow
+					label={$i18n.t('settings.admin.general.responseModelLogo.label')}
+					description={$i18n.t('settings.admin.general.responseModelLogo.description')}
+					let:labelId
+				>
+					<Switch bind:state={adminConfig.ENABLE_RESPONSE_MODEL_LOGO} ariaLabelledbyId={labelId} />
+				</AdminSettingRow>
 
 				<AdminSettingField
 					label={$i18n.t('settings.admin.general.responseWatermark.label')}

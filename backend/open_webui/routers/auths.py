@@ -131,6 +131,8 @@ ADMIN_CONFIG_KEYS = {
     'ENABLE_USER_WEBHOOKS': 'ui.enable_user_webhooks',
     'ENABLE_USER_STATUS': 'users.enable_status',
     'ENABLE_CHAT_GLANCE': 'ui.enable_chat_glance',  # CUSTOM
+    'ENABLE_RESPONSE_MODEL_NAME': 'ui.enable_response_model_name',  # CUSTOM
+    'ENABLE_RESPONSE_MODEL_LOGO': 'ui.enable_response_model_logo',  # CUSTOM
     'PENDING_USER_OVERLAY_TITLE': 'ui.pending_user_overlay_title',
     'PENDING_USER_OVERLAY_CONTENT': 'ui.pending_user_overlay_content',
     'RESPONSE_WATERMARK': 'ui.watermark',
@@ -1237,6 +1239,8 @@ class AdminConfig(BaseModel):
     ENABLE_USER_WEBHOOKS: bool
     ENABLE_USER_STATUS: bool
     ENABLE_CHAT_GLANCE: bool = False  # CUSTOM
+    ENABLE_RESPONSE_MODEL_NAME: bool = False  # CUSTOM
+    ENABLE_RESPONSE_MODEL_LOGO: bool = False  # CUSTOM
     PENDING_USER_OVERLAY_TITLE: str | None = None
     PENDING_USER_OVERLAY_CONTENT: str | None = None
     RESPONSE_WATERMARK: str | None = None
