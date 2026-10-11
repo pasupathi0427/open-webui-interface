@@ -103,6 +103,9 @@
 	on:keyup={(e) => {
 		if (e.key === 'Shift') shiftKey = false;
 	}}
+	on:blur={() => {
+		shiftKey = false;
+	}}
 />
 
 <UserStatusModal
@@ -298,7 +301,7 @@
 					</a>
 					{#if shiftKey}
 						<Tooltip
-							content={isPinned('workspace')
+							content={pinnedItems.includes('workspace')
 								? $i18n.t('Unpin from Sidebar')
 								: $i18n.t('Pin to Sidebar')}
 						>
@@ -307,7 +310,7 @@
 								class="p-1 mr-1 rounded-lg hover:bg-gray-100/60 dark:hover:bg-gray-700/60 transition"
 								on:click|preventDefault|stopPropagation={() => togglePin('workspace')}
 							>
-								{#if isPinned('workspace')}
+								{#if pinnedItems.includes('workspace')}
 									<PinSlashIcon className="size-3.5" strokeWidth="1.5" />
 								{:else}
 									<PinIcon className="size-3.5" strokeWidth="1.5" />
@@ -344,7 +347,7 @@
 					</a>
 					{#if shiftKey}
 						<Tooltip
-							content={isPinned('notes')
+							content={pinnedItems.includes('notes')
 								? $i18n.t('Unpin from Sidebar')
 								: $i18n.t('Pin to Sidebar')}
 						>
@@ -353,7 +356,7 @@
 								class="p-1 mr-1 rounded-lg hover:bg-gray-100/60 dark:hover:bg-gray-700/60 transition"
 								on:click|preventDefault|stopPropagation={() => togglePin('notes')}
 							>
-								{#if isPinned('notes')}
+								{#if pinnedItems.includes('notes')}
 									<PinSlashIcon className="size-3.5" strokeWidth="1.5" />
 								{:else}
 									<PinIcon className="size-3.5" strokeWidth="1.5" />
@@ -390,7 +393,7 @@
 					</a>
 					{#if shiftKey}
 						<Tooltip
-							content={isPinned('calendar')
+							content={pinnedItems.includes('calendar')
 								? $i18n.t('Unpin from Sidebar')
 								: $i18n.t('Pin to Sidebar')}
 						>
@@ -399,7 +402,7 @@
 								class="p-1 mr-1 rounded-lg hover:bg-gray-100/60 dark:hover:bg-gray-700/60 transition"
 								on:click|preventDefault|stopPropagation={() => togglePin('calendar')}
 							>
-								{#if isPinned('calendar')}
+								{#if pinnedItems.includes('calendar')}
 									<PinSlashIcon className="size-3.5" strokeWidth="1.5" />
 								{:else}
 									<PinIcon className="size-3.5" strokeWidth="1.5" />
@@ -436,7 +439,7 @@
 					</a>
 					{#if shiftKey}
 						<Tooltip
-							content={isPinned('automations')
+							content={pinnedItems.includes('automations')
 								? $i18n.t('Unpin from Sidebar')
 								: $i18n.t('Pin to Sidebar')}
 						>
@@ -445,7 +448,7 @@
 								class="p-1 mr-1 rounded-lg hover:bg-gray-100/60 dark:hover:bg-gray-700/60 transition"
 								on:click|preventDefault|stopPropagation={() => togglePin('automations')}
 							>
-								{#if isPinned('automations')}
+								{#if pinnedItems.includes('automations')}
 									<PinSlashIcon className="size-3.5" strokeWidth="1.5" />
 								{:else}
 									<PinIcon className="size-3.5" strokeWidth="1.5" />
@@ -482,7 +485,7 @@
 					</a>
 					{#if shiftKey}
 						<Tooltip
-							content={isPinned('playground')
+							content={pinnedItems.includes('playground')
 								? $i18n.t('Unpin from Sidebar')
 								: $i18n.t('Pin to Sidebar')}
 						>
@@ -491,7 +494,7 @@
 								class="p-1 mr-1 rounded-lg hover:bg-gray-100/60 dark:hover:bg-gray-700/60 transition"
 								on:click|preventDefault|stopPropagation={() => togglePin('playground')}
 							>
-								{#if isPinned('playground')}
+								{#if pinnedItems.includes('playground')}
 									<PinSlashIcon className="size-3.5" strokeWidth="1.5" />
 								{:else}
 									<PinIcon className="size-3.5" strokeWidth="1.5" />

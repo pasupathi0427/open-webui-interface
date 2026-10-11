@@ -310,3 +310,21 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Files created/regenerated: drawable-{mdpi..xxxhdpi}/splash_icon.png (288dp canvas, wordmark 60% wide, inside the 192dp circle); all 11 drawable*/splash.png → white with centred wordmark (sizes kept). Launcher mipmaps unchanged (K).
 - resources/android-icon/make_icons.py now also builds the launch screen (wordmark.svg/png master restored) and rewrites the launch style — one command regenerates icon + splash.
 - Verified: generated splash preview. Needs reinstall on device.
+
+## [2026-10-11] Merge upstream Open WebUI v0.12.0 (tag 15818d88f) into merge_new_version_v0.12.0
+- Author: Claude / reviewer: <owner>
+- Scope: 584 upstream commits since merge-base 8bd8b4fac; 49 files changed on both sides; 12 textual conflicts, all resolved keeping both sides:
+  - Dockerfile — kept our `NODE_OPTIONS=--max-old-space-size=8192` and upstream `APP_BUILD_CHANNEL`.
+  - backend/open_webui/routers/files.py — our RAGFlow streaming branch first (returns for RAGFlow-backed files), then upstream's `if not file.path: 404` guard for local files.
+  - backend/open_webui/routers/models.py — kept our RAGFlow model-sync route and upstream's model-control helpers.
+  - src/lib/components/chat/Chat.svelte — upstream's rewritten `handleOpenAIError` (getErrorMessage) + our USAGE_LIMIT_REACHED hook re-applied at its top.
+  - ResponseMessage.svelte — our admin-flag gate + theme param, with upstream's `model?.id ?? message.model` fallback.
+  - UserMessage.svelte — upstream's `authorId` + our Karix fallback avatar.
+  - channel/Messages/Message.svelte, workspace/Models.svelte — both sides' imports kept.
+  - SettingsModal.svelte — kept our 1020×680 Karix window (upstream switched to full height / no max width).
+  - workspace/Models/ModelEditor.svelte — upstream's new header layout (background image controls) with our Karix default model image re-applied (5 refs, same as before).
+  - package-lock.json — regenerated (`npm install --package-lock-only`) from merged package.json; static/pyodide/pyodide-lock.json — upstream's.
+- package.json: `pyodide` realigned to upstream `^314.0.3` (our branch had `^0.27.3` from pre-existing local changes; mismatched upstream's 314 lockfile). Capacitor deps kept.
+- DB: upstream added migrations from the same parent (d4c1a8e37b62 → … → b8f2c6d91a04, incl. MFA/session stamp). Added merge revision c3e9a1f7d2b5 (down_revision = a7f3c2e1b9d4, b8f2c6d91a04) instead of re-parenting ours, so DBs that already applied the usage tables still receive upstream's migrations. No-op upgrade/downgrade.
+- New upstream Python deps (pyotp, qrcode; bumps aiohttp, pycrdt, hiredis, pillow, rapidocr) — requirements.txt/pyproject already upstream's; local .venv updated with `uv pip install`.
+- Verified: no conflict markers left; every `CUSTOM` marker count identical before/after; backend compileall OK; full app import OK with usage routes, usage hook, chat pre-check, admin flags, RAGFlow sync route present; Alembic: existing-DB path (a7f3c2e1b9d4 → head) applies upstream's auth.mfa/session_stamp and lands on c3e9a1f7d2b5; fresh DB + full usage test suite pass; en-US JSON valid; svelte-check 6070 errors (was 6992; 0 in custom components). `vite build` (adapter-static) passes after `npm install` of the new upstream deps (e.g. three 0.186.1, pyodide 314.0.3).
