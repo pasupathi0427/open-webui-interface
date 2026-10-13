@@ -184,6 +184,7 @@ from open_webui.routers import (
     utils,
 )
 from open_webui.routers import usage as usage_router  # CUSTOM
+from open_webui.routers import group_access as group_access_router  # CUSTOM
 from open_webui.models.usage import Usage  # CUSTOM
 from open_webui.routers.retrieval import (
     get_ef,
@@ -914,6 +915,7 @@ app.include_router(terminals.router, prefix='/api/v1/terminals', tags=['terminal
 app.include_router(automations.router, prefix='/api/v1/automations', tags=['automations'])
 app.include_router(calendar.router, prefix='/api/v1/calendars', tags=['calendars'])
 app.include_router(usage_router.router, prefix='/api/v1/usage', tags=['usage'])  # CUSTOM
+app.include_router(group_access_router.router, prefix='/api/v1/group-access', tags=['group-access'])  # CUSTOM
 
 # SCIM 2.0 API for identity management
 if ENABLE_SCIM:

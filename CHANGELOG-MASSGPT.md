@@ -328,3 +328,20 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - DB: upstream added migrations from the same parent (d4c1a8e37b62 → … → b8f2c6d91a04, incl. MFA/session stamp). Added merge revision c3e9a1f7d2b5 (down_revision = a7f3c2e1b9d4, b8f2c6d91a04) instead of re-parenting ours, so DBs that already applied the usage tables still receive upstream's migrations. No-op upgrade/downgrade.
 - New upstream Python deps (pyotp, qrcode; bumps aiohttp, pycrdt, hiredis, pillow, rapidocr) — requirements.txt/pyproject already upstream's; local .venv updated with `uv pip install`.
 - Verified: no conflict markers left; every `CUSTOM` marker count identical before/after; backend compileall OK; full app import OK with usage routes, usage hook, chat pre-check, admin flags, RAGFlow sync route present; Alembic: existing-DB path (a7f3c2e1b9d4 → head) applies upstream's auth.mfa/session_stamp and lands on c3e9a1f7d2b5; fresh DB + full usage test suite pass; en-US JSON valid; svelte-check 6070 errors (was 6992; 0 in custom components). `vite build` (adapter-static) passes after `npm install` of the new upstream deps (e.g. three 0.186.1, pyodide 314.0.3).
+
+## [2026-10-13] Group Access tab — models, tools, skills, prompts in one place (owner request)
+- Author: Claude / reviewer: <owner>
+- Why: access had to be set per resource in the workspace; easy to share a model with a group but forget the tools/skills it uses.
+- Backend (files created: backend/open_webui/routers/group_access.py; main.py + import/include_router `/api/v1/group-access`):
+  - GET /{group_id} (admin): every model (from app.state.MODELS, minus arena/direct), tool, skill, prompt with `granted` (this group has read) and `everyone` (shared with all users); models also return `tool_ids` / `skill_ids` from meta.
+  - POST /{group_id} (admin): body = checked ids per type; adds/removes ONLY this group's `read` grants (write grants, other groups, users, public untouched). Provider models without a DB row get a minimal row first (same as /models/model/access/update). Fires MODEL_ACCESS_UPDATED / TOOL_ACCESS_UPDATED / SKILL_UPDATED / PROMPT_ACCESS_UPDATED per changed resource; bumps model updated_at.
+- Frontend (files created: src/lib/apis/groupAccess/index.ts, src/lib/components/admin/Users/Groups/AccessTab.svelte; EditGroupModal: import + "Access" tab button + panel; GroupItem: 'access' in tabs):
+  - Sub-tabs Models / Tools / Skills / Prompts with checked/total counts, search, Select all / Clear (filtered list), "Everyone" badge, own Save (dirty-tracked).
+  - Ticking a model also ticks the tools and skills it uses; amber warning lists ticked models whose tools/skills are still unticked, with "Grant missing".
+- i18n: 10 keys.
+- Verified: backend test on temp DB (arena skipped; provider model registered on grant; model tool/skill deps listed; everyone / other-group / write grants preserved; unknown ids ignored; untick revokes; re-save no-op); app import shows the route; svelte-check 6031 (0 in new files). Not yet verified in a browser.
+- Follow-up (owner): 
+  - Knowledge bases added as a fifth type: backend `TYPES` + 'knowledge' (Knowledges.get_knowledge_bases, KNOWLEDGE_ACCESS_UPDATED), models return `knowledge_ids` (meta.knowledge entries of type 'collection'; attached files ignored). Frontend: "Knowledge" sub-tab; ticking a model also ticks its knowledge bases; gap warning covers tools, skills and knowledge.
+  - Bug fix: rows could be ticked but not unticked. Each row was a `<label>` around the shared `Checkbox` (a `<button>`); once checked, the click landed on the tick SVG inside the button, the label re-clicked the button and it toggled twice. Rows are now a single `role="checkbox"` button with a drawn box (no nested controls) → one toggle per click, keyboard accessible.
+  - Verified: backend test extended (KB listed, model KB dependency, grant + revoke) — passed; svelte-check 6031 (0 in AccessTab).
+- Follow-up: Access tab tick boxes and selected sub-tab pill use `--theme-accent` / `--theme-on-accent` (boxes were near-black spans the global accent rule does not reach; now match the accent in every theme).

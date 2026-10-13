@@ -12,6 +12,7 @@
 	import { getGroupPreview } from '$lib/apis/groups';
 	import GroupPreviewPanel from './GroupPreviewPanel.svelte';
 	import UsageTab from './UsageTab.svelte'; // CUSTOM
+	import AccessTab from './AccessTab.svelte'; // CUSTOM
 	import { DEFAULT_PERMISSIONS } from '$lib/constants/permissions';
 	import { getUserDefaultPermissions, getUserDefaultPermissionsDefaults } from '$lib/apis/users';
 	import UserPlusSolid from '$lib/components/icons/UserPlusSolid.svelte';
@@ -319,6 +320,37 @@
 								</button>
 							{/if}
 
+							<!-- CUSTOM: models / tools / skills / prompts access for this group -->
+							{#if tabs.includes('access') && usageGroupId}
+								<button
+									class="px-0.5 py-1 max-w-fit w-fit rounded-lg flex-1 lg:flex-none flex text-right transition {selectedTab ===
+									'access'
+										? ''
+										: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+									on:click={() => {
+										selectedTab = 'access';
+									}}
+									type="button"
+								>
+									<div class=" self-center mr-2">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 16 16"
+											fill="currentColor"
+											class="w-4 h-4"
+											aria-hidden="true"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									</div>
+									<div class=" self-center">{$i18n.t('Access')}</div>
+								</button>
+							{/if}
+
 							<!-- CUSTOM: department token usage -->
 							{#if tabs.includes('usage') && usageGroupId}
 								<button
@@ -412,6 +444,8 @@
 									<GroupPreviewPanel groupId={group?.id} />
 								{:else if selectedTab == 'usage' && usageGroupId}
 									<UsageTab groupId={usageGroupId} />
+								{:else if selectedTab == 'access' && usageGroupId}
+									<AccessTab groupId={usageGroupId} />
 								{/if}
 							</div>
 
