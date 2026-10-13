@@ -1,8 +1,8 @@
 <script lang="ts">
 	// CUSTOM: one place to grant this group read access to models, tools, skills, prompts and
-	// knowledge bases. Ticking a model also ticks the tools / skills / knowledge it uses, and a
-	// warning lists any ticked model whose dependencies are still unticked — so a model never
-	// reaches users without what it needs. Saves on its own (not via the group's Save).
+	// knowledge bases. Each checkbox changes only its own item. Each time the tab opens, a
+	// dismissible notice lists ticked models whose tools / skills / knowledge are still unticked,
+	// with "Grant missing". Saves on its own (not via the group's Save).
 	import { getContext, onMount } from 'svelte';
 	import type { Writable } from 'svelte/store';
 	import type { i18n as i18nType } from 'i18next';
@@ -12,6 +12,7 @@
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import Search from '$lib/components/icons/Search.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
+	import XMark from '$lib/components/icons/XMark.svelte';
 
 	const i18n: Writable<i18nType> = getContext('i18n');
 
@@ -56,49 +57,59 @@
 		for (const [k] of KINDS) (data[k] ?? []).forEach((i) => i.granted && c[k].add(i.id));
 		checked = c;
 		saved = snapshot(checked);
+		refreshGaps();
 	};
 
-	$: exists = Object.fromEntries(
-		DEPS.map(([k]) => [k, new Set((data?.[k] ?? []).map((i) => i.id))])
-	) as Record<Dep, Set<string>>;
+	// ids that still exist, per dependency kind — computed from `data` directly (not `$:`), because
+	// refreshGaps() runs inside load() before reactive statements would have updated
+	const existing = (k: Dep) => new Set((data?.[k] ?? []).map((i) => i.id));
 
 	/** [kind, id] pairs a model depends on (only ones that still exist) */
 	const depsOf = (modelId: string): [Dep, string][] => {
 		const m = data?.model.find((x) => x.id === modelId);
-		return DEPS.flatMap(([k, field]) =>
-			((m?.[field] as string[] | undefined) ?? [])
-				.filter((id) => exists[k].has(id))
-				.map((id) => [k, id] as [Dep, string])
-		);
+		return DEPS.flatMap(([k, field]) => {
+			const ids = existing(k);
+			return ((m?.[field] as string[] | undefined) ?? [])
+				.filter((id) => ids.has(id))
+				.map((id) => [k, id] as [Dep, string]);
+		});
 	};
 
 	const nameOf = (kind: Dep, id: string) => data?.[kind].find((x) => x.id === id)?.name ?? id;
 
+	// ticking an item changes only that item (dependencies are never ticked automatically)
 	const toggle = (kind: Kind, id: string, on: boolean) => {
-		if (on) {
-			checked[kind].add(id);
-			// a model brings its tools, skills and knowledge along
-			if (kind === 'model') depsOf(id).forEach(([k, d]) => checked[k].add(d));
-		} else {
-			checked[kind].delete(id);
-		}
+		on ? checked[kind].add(id) : checked[kind].delete(id);
 		checked = checked;
 	};
 
-	// ticked models whose dependencies this group still cannot use
-	$: gaps = data
-		? data.model
-				.filter((m) => checked.model.has(m.id))
-				.map((m) => ({
-					model: m.name,
-					missing: depsOf(m.id).filter(([k, d]) => !checked[k].has(d))
-				}))
-				.filter((g) => g.missing.length)
-		: [];
+	// Gaps = granted models whose tools/skills/knowledge this group still cannot use.
+	// Shown each time the tab opens (from the saved access), not live while ticking — a gap can
+	// be intentional; × hides it until the tab is opened again.
+	type Gap = { model: string; missing: [Dep, string][] };
+	let gaps: Gap[] = [];
+	let showGaps = false;
+
+	const computeGaps = (): Gap[] =>
+		(data?.model ?? [])
+			.filter((m) => checked.model.has(m.id))
+			.map((m) => ({
+				model: m.name,
+				missing: depsOf(m.id).filter(([k, d]) => !checked[k].has(d))
+			}))
+			.filter((g) => g.missing.length);
+
+	const refreshGaps = () => {
+		gaps = computeGaps();
+		showGaps = gaps.length > 0;
+	};
+
+	const dismissGaps = () => (showGaps = false);
 
 	const fixGaps = () => {
 		gaps.forEach((g) => g.missing.forEach(([k, d]) => checked[k].add(d)));
 		checked = checked;
+		showGaps = false;
 	};
 
 	$: items = data
@@ -157,7 +168,7 @@
 			{/each}
 		</div>
 
-		{#if gaps.length}
+		{#if showGaps}
 			<div
 				class="flex flex-wrap items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
 				role="status"
@@ -178,6 +189,15 @@
 					class="shrink-0 rounded-lg border border-amber-300 px-2.5 py-1 font-medium hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/40"
 					on:click={fixGaps}>{$i18n.t('Grant missing')}</button
 				>
+				<button
+					type="button"
+					class="shrink-0 rounded-md p-1 opacity-70 hover:bg-amber-100 hover:opacity-100 dark:hover:bg-amber-900/40"
+					aria-label={$i18n.t('Dismiss')}
+					title={$i18n.t('Dismiss')}
+					on:click={dismissGaps}
+				>
+					<XMark className="size-3.5" strokeWidth="2" />
+				</button>
 			</div>
 		{/if}
 
