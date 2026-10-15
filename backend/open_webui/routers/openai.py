@@ -1432,6 +1432,8 @@ async def generate_chat_completion(
     metadata = payload.pop('metadata', None)
 
     model_id = form_data.get('model')
+    # Kept before the base-model swap below; forwarded as X-OpenWebUI-Model-Id.
+    original_model_id = model_id
     model_info = await Models.get_model_by_id(model_id)
 
     # Check model info and override the payload
@@ -1505,6 +1507,11 @@ async def generate_chat_completion(
             payload['logit_bias'] = JSONCodec.loads(logit_bias)
 
     headers, cookies = await get_headers_and_cookies(request, url, key, api_config, metadata, user=user)
+    # A custom model was swapped for its base model above. Tell the provider which model
+    # the user actually chose, so the ow-ragflow-sync gateway can pick that model's
+    # RAGFlow assistant. Other providers ignore unknown headers.
+    if original_model_id and original_model_id != payload.get('model'):
+        headers['X-OpenWebUI-Model-Id'] = original_model_id
 
     is_responses = api_config.get('api_type') == 'responses'
 
