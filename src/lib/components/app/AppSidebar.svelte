@@ -66,7 +66,7 @@
 			<img
 				src={$brandLogoCircle}
 				class="size-10 {selected === '' ? 'rounded-2xl' : 'rounded-full'}"
-				alt="logo"
+				alt=""
 				draggable="false"
 			/>
 		</button>

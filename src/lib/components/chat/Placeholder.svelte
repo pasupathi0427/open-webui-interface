@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { brandLogoCircle, brandVariant } from '$lib/stores';
+	import type { TerminalContext } from '$lib/types';
 	import { toast } from 'svelte-sonner';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
@@ -44,14 +45,17 @@
 
 	export let autoScroll = false;
 	export let callActive = false;
+	export let callEnabled = true;
 
 	export let atSelectedModel: Model | undefined;
 	export let selectedModels: [''];
 
 	export let history;
+	export let chatId = '';
 
 	export let prompt = '';
 	export let files = [];
+	export let terminalContext: TerminalContext | null = null;
 	export let messageInput = null;
 
 	export let selectedToolIds = [];
@@ -98,7 +102,9 @@
 	$: models = selectedModels.map((id) => $_models.find((m) => m.id === id));
 	$: selectedModel = atSelectedModel ?? models[selectedModelIdx];
 	$: selectedModelName = resolveLocalizedModelName(selectedModel, $i18n.language);
-	$: selectedModelDescription = resolveLocalizedModelDescription(selectedModel, $i18n.language);
+	$: selectedModelDescription =
+		$config?.license_metadata?.chat_placeholder_description ||
+		resolveLocalizedModelDescription(selectedModel, $i18n.language);
 	$: selectedSuggestionPrompts =
 		resolveLocalizedModelPromptSuggestions(atSelectedModel, $i18n.language) ??
 		resolveLocalizedModelPromptSuggestions(models[selectedModelIdx], $i18n.language) ??
@@ -165,7 +171,10 @@
 			>
 				{#if !($selectedFolder && folderReadOnly)}
 					<MessageInput
+						{chatId}
+						{terminalContext}
 						{callActive}
+						{callEnabled}
 						bind:this={messageInput}
 						{history}
 						bind:selectedModels

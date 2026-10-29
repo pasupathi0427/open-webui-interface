@@ -50,7 +50,7 @@ from open_webui.routers.retrieval import (
     process_files_batch,
 )
 from open_webui.storage.provider import Storage
-from open_webui.utils.access_control import filter_allowed_access_grants, has_permission
+from open_webui.utils.access_control import filter_allowed_access_grants, has_permission, validate_access_grants
 from open_webui.utils.access_control.files import has_access_to_file
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.json_codec import JSONCodec
@@ -380,7 +380,7 @@ async def create_new_knowledge(
         user.id,
         user.role,
         form_data.access_grants,
-        'sharing.public_knowledge',
+        resource_type='knowledge',
     )
 
     knowledge = await Knowledges.insert_new_knowledge(user.id, form_data)
@@ -952,7 +952,7 @@ async def create_external_knowledge(
         user.id,
         user.role,
         form_data.access_grants,
-        'sharing.public_knowledge',
+        resource_type='knowledge',
     )
 
     knowledge = await Knowledges.insert_new_knowledge(
@@ -1011,7 +1011,7 @@ async def create_external_knowledge_source(
         user.id,
         user.role,
         form_data.access_grants,
-        'sharing.public_knowledge',
+        resource_type='knowledge',
     )
 
     connections = await _get_external_connections()
@@ -1081,14 +1081,6 @@ async def update_external_knowledge_source(
     )
     if not test_result.get('documents'):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Test query returned no results.')
-
-    form_data.access_grants = await filter_allowed_access_grants(
-        await Config.get('user.permissions'),
-        user.id,
-        user.role,
-        form_data.access_grants,
-        'sharing.public_knowledge',
-    )
 
     connections[idx] = connection
     await _set_external_connections(connections)
@@ -1218,14 +1210,6 @@ async def update_knowledge_by_id(
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
         )
 
-    form_data.access_grants = await filter_allowed_access_grants(
-        await Config.get('user.permissions'),
-        user.id,
-        user.role,
-        form_data.access_grants,
-        'sharing.public_knowledge',
-    )
-
     knowledge = await Knowledges.update_knowledge_by_id(id=id, form_data=form_data)
     if knowledge:
         # Re-embed knowledge base for semantic search
@@ -1294,12 +1278,12 @@ async def update_knowledge_access_by_id(
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
         )
 
-    form_data.access_grants = await filter_allowed_access_grants(
+    form_data.access_grants = await validate_access_grants(
         await Config.get('user.permissions'),
         user.id,
         user.role,
         form_data.access_grants,
-        'sharing.public_knowledge',
+        resource_type='knowledge',
     )
 
     knowledge.access_grants = await AccessGrants.set_access_grants('knowledge', id, form_data.access_grants, db=db)
@@ -2533,7 +2517,7 @@ async def delete_knowledge_directory(
         subject_id=dir_id,
         data={'knowledge_id': id, 'move_files': move_files},
     )
-    return {'status': True}
+    return {'status': True, 'file_ids': [file.id for file in files]}
 
 
 @router.post('/{id}/file/move')
