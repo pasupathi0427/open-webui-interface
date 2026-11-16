@@ -17,6 +17,7 @@
 	import XMark from '../icons/XMark.svelte';
 	import Image from './Image.svelte';
 	import FullHeightIframe from './FullHeightIframe.svelte';
+	import MCPApp from '$lib/components/chat/Messages/MCPApp.svelte';
 	import { settings } from '$lib/stores';
 
 	export let id: string = '';
@@ -24,6 +25,8 @@
 		type?: string;
 		id?: string;
 		name?: string;
+		display_label?: string;
+		running_label?: string;
 		arguments?: string;
 		result?: string;
 		files?: string;
@@ -154,6 +157,15 @@
 	$: isPreparing = !isDone && !isRejected && !needsApproval && !needsInput && !isExecuting;
 	$: isActive = isPreparing || isExecuting;
 	$: isError = attributes?.status === 'failed' || (isDone && isToolResultError(result));
+	$: displayLabel =
+		!needsInput &&
+		!isRejected &&
+		!isError &&
+		!['pending', 'queued', 'requires_approval', 'incomplete'].includes(attributes.status ?? '')
+			? isDone
+				? attributes.display_label
+				: attributes.running_label
+			: '';
 
 	$: parsedArgs = parseArguments(args);
 	$: parsedResult = parseJSONString(result);
@@ -163,6 +175,7 @@
 	};
 
 	const toggleOpenOnKeydown = (event: KeyboardEvent) => {
+		if (event.target !== event.currentTarget) return;
 		if (event.key !== 'Enter' && event.key !== ' ') {
 			return;
 		}
@@ -181,14 +194,18 @@
 			</div>
 			{#each embeds as embed, idx}
 				<div class="my-2" id={`${componentId}-tool-call-embed-${idx}`}>
-					<FullHeightIframe
-						src={embed}
-						{args}
-						allowScripts={true}
-						allowForms={$settings?.iframeSandboxAllowForms ?? false}
-						allowSameOrigin={$settings?.iframeSandboxAllowSameOrigin ?? false}
-						allowPopups={true}
-					/>
+					{#if typeof embed === 'object' && embed?.type === 'mcp_app'}
+						{#key JSON.stringify(embed)}<MCPApp app={embed} />{/key}
+					{:else if typeof embed === 'string'}
+						<FullHeightIframe
+							src={embed}
+							{args}
+							allowScripts={true}
+							allowForms={$settings?.iframeSandboxAllowForms ?? false}
+							allowSameOrigin={$settings?.iframeSandboxAllowSameOrigin ?? false}
+							allowPopups={true}
+						/>
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -198,6 +215,7 @@
 			class="{buttonClassName} w-full min-w-0 cursor-pointer"
 			role="button"
 			tabindex="0"
+			aria-expanded={open}
 			on:click={toggleOpen}
 			on:keydown={toggleOpenOnKeydown}
 		>
@@ -232,11 +250,20 @@
 				<!-- Label -->
 				<div class="flex-1 min-w-0 line-clamp-1">
 					<!-- Short label (below md) -->
-					<span class="@md:hidden text-black dark:text-white">{attributes.name}</span>
+					<span
+						class="@md:hidden text-black dark:text-white"
+						title={displayLabel ? attributes.name : undefined}
+						>{displayLabel || attributes.name}</span
+					>
 					<!-- Full label (md and above) -->
-					<span class="hidden @md:inline font-normal">
+					<span
+						class="hidden @md:inline font-normal"
+						title={displayLabel ? attributes.name : undefined}
+					>
 						{#if isRejected}
 							{$i18n.t('Denied {{NAME}}', { NAME: attributes.name })}
+						{:else if displayLabel}
+							{displayLabel}
 						{:else if isDone}
 							{$i18n.t('View Result from {{NAME}}', { NAME: attributes.name })}
 						{:else if needsInput}

@@ -316,3 +316,7 @@ cypress/screenshots
 
 # andriod build
 android/
+/evals/
+
+# Local temporary fixtures and screenshots
+/tmp/

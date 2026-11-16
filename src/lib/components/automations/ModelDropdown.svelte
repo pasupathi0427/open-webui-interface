@@ -2,7 +2,7 @@
 	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import { getContext } from 'svelte';
 
-	import { models } from '$lib/stores';
+	import type { Model } from '$lib/stores';
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 
 	import Dropdown from '$lib/components/common/Dropdown.svelte';
@@ -11,6 +11,8 @@
 	const i18n = getContext('i18n');
 
 	export let model_id = '';
+	export let items: Model[] = [];
+	export let disabled = false;
 
 	export let side: 'top' | 'bottom' = 'top';
 	export let align: 'start' | 'end' = 'start';
@@ -22,22 +24,23 @@
 	let modelSearch = '';
 
 	$: modelLabel = model_id
-		? $models.find((m) => m.id === model_id)?.name || model_id
+		? items.find((m) => m.id === model_id)?.name || model_id
 		: $i18n.t('Select model');
 
 	$: filteredModels = (
 		modelSearch
-			? $models.filter(
+			? items.filter(
 					(m) =>
 						m.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
 						m.id.toLowerCase().includes(modelSearch.toLowerCase())
 				)
-			: $models
+			: items
 	).filter((m) => !(m?.info?.meta?.hidden ?? false));
 </script>
 
 <Dropdown bind:show={showDropdown} {side} {align}>
 	<button
+		{disabled}
 		type="button"
 		class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl text-xs transition
 			text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"

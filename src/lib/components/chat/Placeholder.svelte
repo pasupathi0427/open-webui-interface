@@ -49,6 +49,10 @@
 
 	export let atSelectedModel: Model | undefined;
 	export let selectedModels: [''];
+	export let onModelSelect: (models: string[]) => void = () => {};
+	export let chatFiles: any[] = [];
+	export let params: Record<string, any> = {};
+	export let onParamChange: (key: string, value: unknown) => void = () => {};
 
 	export let history;
 	export let chatId = '';
@@ -124,7 +128,7 @@
 
 <!-- CUSTOM (phones): one full-height column, chat input docked at the bottom (reference mobile) -->
 <div
-	class="m-auto w-full max-w-[58rem] px-1 @2xl:px-20 translate-y-6 py-24 text-center max-md:m-0 max-md:self-stretch max-md:min-h-full max-md:flex max-md:flex-col max-md:translate-y-0 max-md:pt-14 max-md:pb-0"
+	class="m-auto w-full max-w-[58rem] px-1 md:@3xl:px-20 translate-y-6 py-24 text-center max-md:m-0 max-md:self-stretch max-md:min-h-full max-md:flex max-md:flex-col max-md:translate-y-0 max-md:pt-14 max-md:pb-0"
 >
 	{#if $temporaryChatEnabled}
 		<Tooltip
@@ -172,12 +176,16 @@
 				{#if !($selectedFolder && folderReadOnly)}
 					<MessageInput
 						{chatId}
-						{terminalContext}
+						bind:terminalContext
 						{callActive}
 						{callEnabled}
 						bind:this={messageInput}
 						{history}
 						bind:selectedModels
+						{onModelSelect}
+						bind:chatFiles
+						bind:params
+						{onParamChange}
 						bind:files
 						bind:prompt
 						bind:autoScroll

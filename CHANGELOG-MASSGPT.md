@@ -351,3 +351,30 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Follow-up (owner: Grant missing covered only one model): gaps now consider every model the group can use (ticked OR shared with everyone, labelled "shared with everyone"), and a tool/skill/KB already shared with everyone is no longer reported as missing. Notice lists all affected models (scrolls, no 3-item cap) with a per-model "Grant" and "Grant all". Verified with a mock dataset (ticked model, public model, unavailable model, public tool).
 - Follow-up (owner): removed auto-ticking — ticking a model no longer ticks its tools/skills/knowledge; every checkbox changes only its own item. "Uses: …" hint and the on-open gap notice (per-model Grant / Grant all) remain.
 - Follow-up (owner): notice rolled back to the earlier version (ticked models only; title, up to 3 lines + "+N", single "Grant missing"), keeping: shown every time the tab opens + × dismiss. Per-model Grant / Grant all and the "shared with everyone" detection removed.
+
+## [2026-11-16] Upstream merge — Open WebUI v0.13.3 into merge_new_version_v0.13.3
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Backup: branch `backup_merge_new_version_v0.12.4_before_v0.13.3` = previous head 0b00e0895 (unchanged)
+- Merged: upstream tag `v0.13.3` (610 upstream commits) into our 26 custom commits; every custom change kept
+- Conflicts resolved (ours kept, adapted to upstream's new structure):
+  - backend/open_webui/main.py — kept `transactional_sync` lifespan wrapper; upstream's `publish_event(request, …)` signature inside it
+  - backend/open_webui/routers/knowledge.py — kept RAGFlow sync endpoints; `pydantic` import now also `Field` (upstream)
+  - src/lib/stores/index.ts — merged imports (`browser`, `readable` + upstream `get`, `CommentTarget`)
+  - src/lib/components/chat/Chat.svelte — upstream dropped the `{#if !loading}` wrapper; theme-background layers moved into the new wrapper
+  - src/lib/components/chat/Navbar.svelte — upstream moved Temporary Chat into the `renderChatActions` snippet; reset-requests and "Choose model" buttons placed right before it (still immediately left of Temporary Chat); modals kept; `!tabbed` guard adopted
+  - src/lib/components/chat/Placeholder.svelte — our mobile layout kept; padding class renamed to upstream `md:@3xl:px-20`
+  - src/lib/components/chat/Settings/General.svelte — ours kept (theme picker stays in Appearance); upstream's re-added picker dropped
+  - src/lib/components/layout/Sidebar.svelte — BrandWordmark header kept
+  - src/lib/components/layout/Sidebar/UserMenu.svelte — upstream sign-out ConfirmDialog + our profile-menu styles
+  - src/routes/+layout.svelte — brand imports + upstream audio/comments imports; upstream `notify()` with `$brandLogoRounded` icon; our karix-aware theme message handler kept; favicon reactive + upstream notification-sound block
+  - src/lib/components/chat/ModelSelector/ModelItem.svelte, admin/Settings/Models.svelte — both import sets
+  - admin/Analytics/Dashboard.svelte, channel/Messages/Message.svelte, channel/MessageInput/MentionList.svelte, workspace/Models.svelte, workspace/Models/ModelEditor.svelte — upstream version taken (heavily refactored), brand logo changes re-applied (`&theme=$brandVariant`, `$brandLogoCircle` fallback, karix default model image)
+  - .gitignore — both sides
+- Files deleted: src/lib/components/app/AppSidebar.svelte (removed upstream; our change was only its logo); stock icons in static/static and backend/open_webui/static stay deleted (ours)
+- Files created:
+  - backend/open_webui/migrations/versions/a7d4e2c19b60_merge_custom_with_v0_13_3.py — Alembic merge of custom head e5b7d2c94f18 + upstream head 9f6c2a8d1b43 (no schema change)
+- Files modified (beyond conflicts):
+  - src/routes/auth/sessions/[id]/+page.svelte (new upstream page) — logo `<img>`s → `<BrandWordmark>` as on the sign-in page
+- DB migration: a7d4e2c19b60 — merge revision only; upstream adds auth_session, chat_view_state, comment, comment_reaction, notification, tool.is_active; no clash with usage_* tables
+- Verified: backend compiles and imports (v0.13.3, 648 routes incl. usage, group-access, RAGFlow sync); fresh DB migrates to a7d4e2c19b60 with all tables; line audit — all 153 custom-changed files keep their added lines (only the intentional edits above differ); frontend production build passes (npm needs NODE_OPTIONS=--use-system-ca behind the corporate proxy to fetch the 4 new packages)
+- Risk / regression notes: run the §8 checklist in a browser (navbar buttons, themes, usage limit, PWA); upstream's ChatParticipants still falls back to stock favicon.png (as before the merge)
