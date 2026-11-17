@@ -2474,6 +2474,7 @@ async def get_app_config(request: Request):
         'ui.pending_user_overlay_title',
         'ui.pending_user_overlay_content',
         'ui.watermark',
+        'ui.chat_disclaimer',  # CUSTOM
     )
 
     return {
@@ -2638,6 +2639,7 @@ async def get_app_config(request: Request):
                     'pending_user_overlay_title': config.get('ui.pending_user_overlay_title'),
                     'pending_user_overlay_content': config.get('ui.pending_user_overlay_content'),
                     'response_watermark': config.get('ui.watermark'),
+                    'chat_disclaimer': config.get('ui.chat_disclaimer'),  # CUSTOM
                     'iframe_csp': IFRAME_CSP,
                 },
                 'license_metadata': license_metadata,

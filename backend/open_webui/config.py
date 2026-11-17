@@ -1757,6 +1757,9 @@ PENDING_USER_OVERLAY_CONTENT = os.getenv('PENDING_USER_OVERLAY_CONTENT', '')
 
 RESPONSE_WATERMARK = os.getenv('RESPONSE_WATERMARK', '')
 
+# CUSTOM: disclaimer line under the chat input (admin text; empty = not shown)
+CHAT_DISCLAIMER = os.getenv('CHAT_DISCLAIMER', '')
+
 IFRAME_CSP = os.getenv('IFRAME_CSP', '')
 
 USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS = (
@@ -3270,6 +3273,7 @@ DEFAULT_CONFIG = {
     'ui.pending_user_overlay_title': PENDING_USER_OVERLAY_TITLE,
     'ui.pending_user_overlay_content': PENDING_USER_OVERLAY_CONTENT,
     'ui.watermark': RESPONSE_WATERMARK,
+    'ui.chat_disclaimer': CHAT_DISCLAIMER,  # CUSTOM
     'user.permissions': USER_PERMISSIONS,
     'folders.enable': ENABLE_FOLDERS,
     'folders.max_file_count': FOLDER_MAX_FILE_COUNT,

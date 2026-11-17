@@ -515,6 +515,7 @@ type Config = {
 		pending_user_overlay_title?: string;
 		pending_user_overlay_content?: string;
 		response_watermark?: string;
+		chat_disclaimer?: string; // CUSTOM
 		iframe_csp?: string;
 	};
 };

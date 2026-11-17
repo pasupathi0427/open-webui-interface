@@ -153,6 +153,7 @@ ADMIN_CONFIG_KEYS = {
     'PENDING_USER_OVERLAY_TITLE': 'ui.pending_user_overlay_title',
     'PENDING_USER_OVERLAY_CONTENT': 'ui.pending_user_overlay_content',
     'RESPONSE_WATERMARK': 'ui.watermark',
+    'CHAT_DISCLAIMER': 'ui.chat_disclaimer',  # CUSTOM
 }
 
 LDAP_SERVER_CONFIG_KEYS = {
@@ -1203,6 +1204,7 @@ class AdminConfig(MfaConfigForm):
     PENDING_USER_OVERLAY_TITLE: str | None = None
     PENDING_USER_OVERLAY_CONTENT: str | None = None
     RESPONSE_WATERMARK: str | None = None
+    CHAT_DISCLAIMER: str | None = None  # CUSTOM
 
     @field_validator('I18N')
     @classmethod

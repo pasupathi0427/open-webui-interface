@@ -14,6 +14,7 @@
 	import { KARIX_ACCENT, normalizeAppTheme, themePatternImage } from '$lib/utils/themes'; // CUSTOM
 	import { theme as themeMode } from '$lib/stores'; // CUSTOM: Karix pattern colour
 	import { refreshUsageStatus } from '$lib/stores/usage'; // CUSTOM
+	import ChatDisclaimer from './ChatDisclaimer.svelte'; // CUSTOM
 	import { fade } from 'svelte/transition';
 	const i18n: Writable<i18nType> = getContext('i18n');
 
@@ -5658,6 +5659,8 @@
 									id={embedded ? messageInputDropzoneId : undefined}
 									class=" pb-2 {dragged ? 'z-0' : 'z-10'}"
 								>
+									<!-- CUSTOM: like ChatGPT — above the input, only after the chat has messages -->
+									{#if history?.currentId}<ChatDisclaimer />{/if}
 									<MessageInput
 										bind:terminalContext
 										{typingUsers}

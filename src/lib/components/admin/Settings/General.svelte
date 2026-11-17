@@ -516,6 +516,18 @@
 					/>
 				</AdminSettingField>
 
+				<!-- CUSTOM: disclaimer line under the chat input; empty = hidden -->
+				<AdminSettingField
+					label={$i18n.t('settings.admin.general.chatDisclaimer.label')}
+					description={$i18n.t('settings.admin.general.chatDisclaimer.description')}
+				>
+					<Textarea
+						className={textareaClass}
+						placeholder={$i18n.t('Enter a disclaimer to show under the chat input. Leave empty for none.')}
+						bind:value={adminConfig.CHAT_DISCLAIMER}
+					/>
+				</AdminSettingField>
+
 				<AdminSettingField
 					label={$i18n.t('settings.admin.general.webuiUrl.label')}
 					description={$i18n.t('settings.admin.general.webuiUrl.description')}

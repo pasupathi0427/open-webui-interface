@@ -409,3 +409,20 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - src/lib/components/chat/Navbar.svelte — the admin reset-requests button in the navbar/tab bar now renders only when `$mobile`. On desktop and tablet the sidebar button (next to Notifications / under Workspace) is always visible, so the top-bar copy was redundant. On mobile the sidebar is a hidden drawer, so the top-bar button stays. "Choose model" is unchanged.
 - Risk / regression notes: display only.
 - Verified: vite build; manual check needed at desktop and mobile widths
+
+## [2026-11-17] UI — Chat Disclaimer above the chat input (admin text)
+- Author: Claude (session ref) / reviewer: owner
+- Files created:
+  - src/lib/components/chat/ChatDisclaimer.svelte — one muted, centred line (at most two lines) above the chat input, like ChatGPT, read from `config.ui.chat_disclaimer`. Renders nothing when empty.
+- Files modified:
+  - backend/open_webui/config.py — `CHAT_DISCLAIMER` env var (default '') and the `ui.chat_disclaimer` config default
+  - backend/open_webui/main.py — key loaded and exposed to signed-in users as `ui.chat_disclaimer`, next to `response_watermark`
+  - backend/open_webui/routers/auths.py — `CHAT_DISCLAIMER` in ADMIN_CONFIG_KEYS and AdminConfig, so it is admin-only to change
+  - src/lib/components/admin/Settings/General.svelte — "Chat Disclaimer" textarea under Response Watermark
+  - src/lib/components/chat/Chat.svelte — `<ChatDisclaimer />` above the main chat input, only once the chat has messages (`history.currentId`). It is not shown on the new-chat/landing screen or in side-chat/embedded tabs.
+  - src/lib/stores/index.ts — `chat_disclaimer` in the config `ui` type
+  - src/lib/i18n/locales/en-US/translation.json — label, description and placeholder keys
+- Config added: CHAT_DISCLAIMER ('') — text shown under the chat input; empty = hidden (current behaviour)
+- DB migration: none (per-key config row is created on first save)
+- Risk / regression notes: empty by default, so nothing changes until an admin sets it. It is separate from Response Watermark, which still only appends to copied text.
+- Verified: backend import (key, admin form field, empty default); vite build
