@@ -46,7 +46,7 @@
 	import ModelTile from './Placeholder/ModelTile.svelte'; // CUSTOM
 	import ResetRequestsModal from './Usage/ResetRequestsModal.svelte'; // CUSTOM
 	import QueueList from '../icons/QueueList.svelte'; // CUSTOM
-	import { pendingResetCount, refreshPendingResetCount } from '$lib/stores/usage'; // CUSTOM
+	import { pendingResetCount, watchPendingResetCount } from '$lib/stores/usage'; // CUSTOM
 	import { createMessagesList } from '$lib/utils';
 	import { generateTitle } from '$lib/apis';
 	import { updateChatById } from '$lib/apis/chats';
@@ -86,14 +86,11 @@
 
 	// CUSTOM: admin queue of token reset requests
 	let showResetRequests = false;
-	let resetPoll: ReturnType<typeof setInterval>;
+	let stopResetPoll = () => {};
 	onMount(() => {
-		if ($user?.role !== 'admin') return;
-		refreshPendingResetCount();
-		// ponytail: 60s poll; push via socket event if the queue needs to be instant
-		resetPoll = setInterval(refreshPendingResetCount, 60_000);
+		if ($user?.role === 'admin') stopResetPoll = watchPendingResetCount();
 	});
-	onDestroy(() => clearInterval(resetPoll));
+	onDestroy(() => stopResetPoll());
 	$: if (
 		!pickerWelcome &&
 		$settings &&
@@ -267,7 +264,60 @@
 	{/if}
 {/snippet}
 
+<!-- CUSTOM: our navbar buttons. Rendered in the navbar row, and in the tab bar when the tab
+     workspace hides that row (v0.13+), so they stay immediately left of Temporary Chat in both. -->
+{#snippet renderCustomActions(compact: boolean)}
+	<!-- reset requests: mobile only here; on larger screens the sidebar button (next to Notifications /
+	     under Workspace) is always visible, while on mobile the sidebar is a hidden drawer -->
+	{#if $mobile && $user?.role === 'admin' && $pendingResetCount > 0}
+		<Tooltip content={$i18n.t('Token reset requests')}>
+			<button
+				id={compact ? undefined : 'reset-requests-button'}
+				class="relative flex {compact
+					? 'size-7'
+					: 'size-8'} shrink-0 items-center justify-center rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-(--theme-ink-2) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
+				aria-label={$i18n.t('{{count}} token reset requests', {
+					count: $pendingResetCount
+				})}
+				on:click={() => (showResetRequests = true)}
+			>
+				<QueueList className="size-4" strokeWidth="1.8" />
+				<span
+					class="absolute -top-1.5 -right-1.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-(--theme-accent) text-(--theme-on-accent) text-[0.625rem] font-semibold leading-[1.125rem] text-center"
+					aria-hidden="true">{$pendingResetCount > 99 ? '99+' : $pendingResetCount}</span
+				>
+			</button>
+		</Tooltip>
+	{/if}
+
+	{#if ($models ?? []).length > 0}
+		<Tooltip content={$i18n.t('Choose model')}>
+			<button
+				id={compact ? undefined : 'choose-model-button'}
+				class="flex shrink-0 items-center gap-2 {compact
+					? 'h-7 max-lg:w-7'
+					: 'h-8 max-md:w-8'} {compact
+					? 'max-lg:justify-center lg:pl-0.5 lg:pr-2.5'
+					: 'max-md:justify-center md:pl-1 md:pr-3'} rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-[0.8125rem] font-medium text-(--theme-ink) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
+				aria-label={$i18n.t('Choose model')}
+				on:click={() => {
+					pickerWelcome = true;
+					showModelPicker = true;
+				}}
+			>
+				<ModelTile
+					model={$models.find((m) => m.id === selectedModelId)}
+					lang={$i18n.language}
+					className="{compact ? 'size-5.5' : 'size-6'} rounded-full"
+				/>
+				<span class={compact ? 'max-lg:hidden' : 'max-md:hidden'}>{$i18n.t('Choose model')}</span>
+			</button>
+		</Tooltip>
+	{/if}
+{/snippet}
+
 {#snippet renderTabBarActions()}
+	{@render renderCustomActions(true)}
 	{@render renderTemporaryChatToggle()}
 	{#if liveParticipants.length > 0}
 		<div class="flex h-6 shrink-0 items-center px-1">
@@ -438,47 +488,8 @@
 				<div class="lg:mr-1 flex flex-none items-center gap-2 self-center">
 					<!-- <div class="md:hidden flex self-center w-[0.0625rem] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
-					<!-- CUSTOM: admin — pending token reset requests -->
-					{#if $user?.role === 'admin' && $pendingResetCount > 0}
-						<Tooltip content={$i18n.t('Token reset requests')}>
-							<button
-								id="reset-requests-button"
-								class="relative flex size-8 items-center justify-center rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-(--theme-ink-2) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
-								aria-label={$i18n.t('{{count}} token reset requests', {
-									count: $pendingResetCount
-								})}
-								on:click={() => (showResetRequests = true)}
-							>
-								<QueueList className="size-4" strokeWidth="1.8" />
-								<span
-									class="absolute -top-1.5 -right-1.5 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-(--theme-accent) text-(--theme-on-accent) text-[0.625rem] font-semibold leading-[1.125rem] text-center"
-									aria-hidden="true">{$pendingResetCount > 99 ? '99+' : $pendingResetCount}</span
-								>
-							</button>
-						</Tooltip>
-					{/if}
-
-					<!-- CUSTOM: "Choose model" — immediately left of Temporary Chat -->
-					{#if ($models ?? []).length > 0}
-						<Tooltip content={$i18n.t('Choose model')}>
-							<button
-								id="choose-model-button"
-								class="flex items-center gap-2 h-8 max-md:w-8 max-md:justify-center md:pl-1 md:pr-3 rounded-full border border-(--theme-line-2) bg-(--theme-surface) text-[0.8125rem] font-medium text-(--theme-ink) shadow-(--theme-sh-1) transition hover:border-(--theme-accent-line)"
-								aria-label={$i18n.t('Choose model')}
-								on:click={() => {
-									pickerWelcome = true;
-									showModelPicker = true;
-								}}
-							>
-								<ModelTile
-									model={$models.find((m) => m.id === selectedModelId)}
-									lang={$i18n.language}
-									className="size-6 rounded-full"
-								/>
-								<span class="max-md:hidden">{$i18n.t('Choose model')}</span>
-							</button>
-						</Tooltip>
-					{/if}
+					<!-- CUSTOM: reset requests + "Choose model", immediately left of Temporary Chat -->
+					{#if !tabbed}{@render renderCustomActions(false)}{/if}
 
 					<!-- CUSTOM: the snippet below starts with Temporary Chat, so "Choose model" stays immediately left of it -->
 					{#if !tabbed}{@render renderChatActions()}{/if}

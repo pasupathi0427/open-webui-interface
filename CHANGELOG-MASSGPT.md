@@ -378,3 +378,34 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - DB migration: a7d4e2c19b60 — merge revision only; upstream adds auth_session, chat_view_state, comment, comment_reaction, notification, tool.is_active; no clash with usage_* tables
 - Verified: backend compiles and imports (v0.13.3, 648 routes incl. usage, group-access, RAGFlow sync); fresh DB migrates to a7d4e2c19b60 with all tables; line audit — all 153 custom-changed files keep their added lines (only the intentional edits above differ); frontend production build passes (npm needs NODE_OPTIONS=--use-system-ca behind the corporate proxy to fetch the 4 new packages)
 - Risk / regression notes: run the §8 checklist in a browser (navbar buttons, themes, usage limit, PWA); upstream's ChatParticipants still falls back to stock favicon.png (as before the merge)
+
+## [2026-11-17] F3 / F1 — Restore "Choose model" + reset-requests buttons in the v0.13 tab bar
+- Author: Claude (session ref) / reviewer: owner
+- Files modified:
+  - src/lib/components/chat/Navbar.svelte — moved the "Choose model" button and the admin token-reset-requests button into a `renderCustomActions(compact)` snippet. It renders in the navbar row as before, and also in `renderTabBarActions`. Since v0.13 the tab workspace (`fullWidthTabs`) hides the navbar row and shows only the tab bar's actions, so both buttons were missing whenever tabs were open. The buttons stay immediately left of Temporary Chat in both places. The compact variant (h-7) matches the tab bar height, and its label hides below the lg breakpoint.
+- Files created: none
+- Files deleted: none
+- Config added: none
+- DB migration: none
+- Risk / regression notes: markup change only. The modals are unchanged and still rendered once. The tab-bar copy has no element id, to avoid duplicate ids.
+- Verified: vite build; manual check needed in tabbed and non-tabbed modes on desktop, tablet and mobile.
+
+## [2026-11-17] F1 — Token reset requests shortcut in the sidebar
+- Author: Claude (session ref) / reviewer: owner
+- Files created:
+  - src/lib/components/layout/Sidebar/ResetRequestsButton.svelte — admin-only button with a pending-count badge. It opens the existing ResetRequestsModal and shows only while requests are pending. It has two variants: `header` (expanded sidebar, left of the Notifications bell) and `rail` (collapsed sidebar, under the pinned items/Workspace). Because the sidebar is on every page and doesn't depend on which chat tab is active, a pending request is visible even when the navbar/tab-bar button is not (e.g. a side-chat tab is active).
+- Files modified:
+  - src/lib/components/layout/Sidebar.svelte — import plus two `<ResetRequestsButton>` placements (header and collapsed rail)
+  - src/lib/stores/usage.ts — `watchPendingResetCount()`: one shared, ref-counted 60s poll instead of one interval per button
+  - src/lib/components/chat/Navbar.svelte — uses `watchPendingResetCount()` instead of its own setInterval. The navbar and tab-bar buttons are unchanged.
+- Config added: none
+- DB migration: none
+- Risk / regression notes: admin-only, hidden at 0 pending. The modal is mounted outside the count check, so it stays open after the last request is decided. Non-admins render nothing and don't poll.
+- Verified: vite build; manual check needed (expanded and collapsed sidebar, mobile drawer, several tabs open)
+
+## [2026-11-17] F1 — Reset-requests navbar button: mobile only
+- Author: Claude (session ref) / reviewer: owner
+- Files modified:
+  - src/lib/components/chat/Navbar.svelte — the admin reset-requests button in the navbar/tab bar now renders only when `$mobile`. On desktop and tablet the sidebar button (next to Notifications / under Workspace) is always visible, so the top-bar copy was redundant. On mobile the sidebar is a hidden drawer, so the top-bar button stays. "Choose model" is unchanged.
+- Risk / regression notes: display only.
+- Verified: vite build; manual check needed at desktop and mobile widths

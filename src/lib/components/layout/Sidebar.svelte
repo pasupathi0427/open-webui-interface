@@ -118,6 +118,7 @@
 	import MobileSwipePanel from '../common/MobileSwipePanel.svelte';
 	import BrandMark from '../icons/BrandMark.svelte'; // CUSTOM
 	import BrandWordmark from '../icons/BrandWordmark.svelte'; // CUSTOM
+	import ResetRequestsButton from './Sidebar/ResetRequestsButton.svelte'; // CUSTOM
 
 	const DEFAULT_PINNED_ITEMS = ['notes', 'workspace'];
 
@@ -1236,6 +1237,9 @@
 							</div>
 						{/if}
 					{/each}
+
+					<!-- CUSTOM: admin token reset requests, under the pinned items (Workspace) -->
+					<ResetRequestsButton variant="rail" />
 				</div>
 			</div>
 
@@ -1328,6 +1332,7 @@
 						<BrandWordmark className="h-[calc(20px*var(--app-text-scale,1))]" />
 					</a>
 					<div class="flex shrink-0 items-center gap-px">
+						<ResetRequestsButton variant="header" /><!-- CUSTOM -->
 						{#if $config?.features?.enable_notifications}<InboxButton
 								onClose={() => inboxHost.close()}
 							/>{/if}

@@ -30,6 +30,25 @@ export const refreshPendingResetCount = async () => {
 	pendingResetCount.set(res?.pending ?? 0);
 };
 
+// One shared 60s poll for the admin queue badge, however many buttons show it (navbar, sidebar).
+// ponytail: poll; push via socket event if the queue needs to be instant
+let pollUsers = 0;
+let pollTimer: ReturnType<typeof setInterval> | undefined;
+
+/** Start polling the pending-request count; returns a stop function. Ref-counted. */
+export const watchPendingResetCount = () => {
+	if (pollUsers++ === 0) {
+		refreshPendingResetCount();
+		pollTimer = setInterval(refreshPendingResetCount, 60_000);
+	}
+	let stopped = false;
+	return () => {
+		if (stopped) return;
+		stopped = true;
+		if (--pollUsers === 0) clearInterval(pollTimer);
+	};
+};
+
 /** "12.4M", "850K", "1,200" */
 export const formatTokens = (n: number) =>
 	n >= 1_000_000
