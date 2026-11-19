@@ -3,6 +3,8 @@
 	const i18n = getContext('i18n');
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import ConnectionLabel from './ConnectionLabel.svelte'; // CUSTOM
+	import { hasConnectionLabel } from '$lib/apis/modelGroups'; // CUSTOM
 	import Switch from '$lib/components/common/Switch.svelte';
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
 	import AddConnectionModal from '$lib/components/AddConnectionModal.svelte';
@@ -59,13 +61,17 @@
 			></div>
 		{/if}
 
-		<input
-			class="text-gray-600 dark:text-gray-400 transition-colors duration-150 group-hover/setting-row:text-gray-900 group-focus-within/setting-row:text-gray-900 dark:group-hover/setting-row:text-white dark:group-focus-within/setting-row:text-white w-full text-sm bg-transparent outline-hidden"
-			placeholder={$i18n.t('Enter URL (e.g. http://localhost:11434)')}
-			aria-label={$i18n.t('URL')}
-			bind:value={url}
-			readonly={true}
-		/>
+		{#if hasConnectionLabel(config)}<!-- CUSTOM: name + group instead of URL -->
+			<ConnectionLabel {config} {url} />
+		{:else}
+			<input
+				class="text-gray-600 dark:text-gray-400 transition-colors duration-150 group-hover/setting-row:text-gray-900 group-focus-within/setting-row:text-gray-900 dark:group-hover/setting-row:text-white dark:group-focus-within/setting-row:text-white w-full text-sm bg-transparent outline-hidden"
+				placeholder={$i18n.t('Enter URL (e.g. http://localhost:11434)')}
+				aria-label={$i18n.t('URL')}
+				bind:value={url}
+				readonly={true}
+			/>
+		{/if}<!-- CUSTOM -->
 	</Tooltip>
 
 	<div class="flex gap-1 items-center">

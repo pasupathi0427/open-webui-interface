@@ -3,6 +3,8 @@
 	const i18n = getContext('i18n');
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import ConnectionLabel from './ConnectionLabel.svelte'; // CUSTOM
+	import { hasConnectionLabel } from '$lib/apis/modelGroups'; // CUSTOM
 	import Switch from '$lib/components/common/Switch.svelte';
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
 	import Cog6 from '$lib/components/icons/Cog6.svelte';
@@ -57,16 +59,20 @@
 		{/if}
 		<div class="flex w-full gap-2">
 			<div class="flex-1 relative">
-				<input
-					class="text-gray-600 dark:text-gray-400 transition-colors duration-150 group-hover/setting-row:text-gray-900 group-focus-within/setting-row:text-gray-900 dark:group-hover/setting-row:text-white dark:group-focus-within/setting-row:text-white outline-hidden w-full bg-transparent {pipeline
-						? 'pr-8'
-						: ''}"
-					placeholder={$i18n.t('API Base URL')}
-					aria-label={$i18n.t('API Base URL')}
-					bind:value={url}
-					autocomplete="off"
-					readonly={true}
-				/>
+				{#if hasConnectionLabel(config)}<!-- CUSTOM: name + group instead of URL -->
+					<ConnectionLabel {config} {url} />
+				{:else}
+					<input
+						class="text-gray-600 dark:text-gray-400 transition-colors duration-150 group-hover/setting-row:text-gray-900 group-focus-within/setting-row:text-gray-900 dark:group-hover/setting-row:text-white dark:group-focus-within/setting-row:text-white outline-hidden w-full bg-transparent {pipeline
+							? 'pr-8'
+							: ''}"
+						placeholder={$i18n.t('API Base URL')}
+						aria-label={$i18n.t('API Base URL')}
+						bind:value={url}
+						autocomplete="off"
+						readonly={true}
+					/>
+				{/if}<!-- CUSTOM -->
 
 				{#if pipeline}
 					<div class=" absolute top-0.5 right-2.5">

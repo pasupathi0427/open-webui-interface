@@ -60,6 +60,7 @@
 	import Download from '$lib/components/icons/Download.svelte';
 	import EllipsisVertical from '$lib/components/icons/EllipsisVertical.svelte';
 	import Wrench from '$lib/components/icons/Wrench.svelte';
+	import Tag from '$lib/components/icons/Tag.svelte'; // CUSTOM
 	import Pin from '$lib/components/icons/Pin.svelte';
 	import PinSlash from '$lib/components/icons/PinSlash.svelte';
 	import GlobeAlt from '$lib/components/icons/GlobeAlt.svelte';
@@ -71,6 +72,10 @@
 	import DropdownMenu from '$lib/components/common/DropdownMenu.svelte';
 	import AdminViewSelector from './Models/AdminViewSelector.svelte';
 	import TagSelector from '$lib/components/workspace/common/TagSelector.svelte';
+	// CUSTOM: admin model groups
+	import ManageModelGroupsModal from './Models/ManageModelGroupsModal.svelte';
+	import ModelGroupChips from './Models/ModelGroupChips.svelte';
+	import { groupMembers, loadModelGroups, modelGroups } from '$lib/apis/modelGroups';
 
 	type ModelListItem = { id: string; name?: string };
 
@@ -113,6 +118,10 @@
 	let viewOption = 'available';
 	let tags: string[] = [];
 	let selectedTag = '';
+	let selectedGroup = ''; // CUSTOM
+	let showGroupsModal = false; // CUSTOM
+	$: modelGroupMembers = groupMembers($modelGroups); // CUSTOM
+	$: if (selectedGroup && !$modelGroups.some((g) => g.id === selectedGroup)) selectedGroup = ''; // CUSTOM
 
 	$: if (typeof tabState?.id === 'string' && tabState.id) {
 		selectedModelId = tabState.id;
@@ -164,6 +173,9 @@
 
 		filteredModels = models
 			.filter((m) => !selectedTag || modelTags(m).includes(selectedTag))
+			.filter(
+				(m: ModelListItem) => !selectedGroup || modelGroupMembers.get(selectedGroup)?.has(m.id)
+			) // CUSTOM
 			.filter((m) => searchValue === '' || m.name.toLowerCase().includes(searchValue.toLowerCase()))
 			.filter((m) => {
 				if (viewOption === 'available') return availableModelIds.has(m.id) || isPresetModel(m);
@@ -277,6 +289,7 @@
 
 	const init = async () => {
 		models = null;
+		loadModelGroups(localStorage.token); // CUSTOM
 
 		modelsConfig = await getModelsConfig(localStorage.token);
 		modelOrderList = modelsConfig?.MODEL_ORDER_LIST ?? [];
@@ -784,6 +797,8 @@
 />
 
 <ManageModelsModal bind:show={showManageModal} />
+<!-- CUSTOM: admin model groups -->
+<ManageModelGroupsModal bind:show={showGroupsModal} models={allModels} />
 
 {#if models !== null}
 	{#if selectedModelId === null}
@@ -892,6 +907,16 @@
 									})}
 								/>
 							{/if}
+
+							{#if $modelGroups.length > 0}
+								<!-- CUSTOM: model group filter -->
+								<TagSelector
+									bind:value={selectedGroup}
+									placeholder={$i18n.t('Group')}
+									align="end"
+									items={$modelGroups.map((g) => ({ value: g.id, label: g.name }))}
+								/>
+							{/if}
 						</div>
 
 						<Dropdown closeOnSelect align="end">
@@ -952,6 +977,22 @@
 											{$i18n.t('settings.admin.models.manageModels.label')}
 										</div>
 									</button>
+
+									{#if $user?.role === 'admin'}
+										<!-- CUSTOM: admin model groups -->
+										<button
+											class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[0.8125rem] hover:text-gray-900 dark:hover:text-gray-100"
+											type="button"
+											on:click={() => {
+												showGroupsModal = true;
+											}}
+										>
+											<Tag className="size-3.5" />
+											<div class="flex items-center">
+												{$i18n.t('Manage Groups')}
+											</div>
+										</button>
+									{/if}
 
 									<button
 										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[0.8125rem] hover:text-gray-900 dark:hover:text-gray-100"
@@ -1112,6 +1153,12 @@
 												>
 													{modelAccessLabel(model)}
 												</span>
+
+												<ModelGroupChips
+													modelId={model.id}
+													groups={$modelGroups}
+													members={modelGroupMembers}
+												/><!-- CUSTOM -->
 
 												{#if defaultModelIdSet.has(model.id)}
 													<span

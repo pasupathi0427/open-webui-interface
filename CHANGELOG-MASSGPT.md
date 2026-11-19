@@ -40,6 +40,11 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/chat/Messages/ResponseMessage.svelte — model logo column and model name wrapped in `features.enable_response_model_logo` / `enable_response_model_name` checks (display only)
 - src/lib/components/common/ToolCallDisplay.svelte, src/lib/components/chat/Messages/Markdown/ConsecutiveDetailsGroup.svelte — status icon wrappers → `tool-status` chips (Check instead of CheckCircle), single rotating ChevronDown (`tool-chevron`), slide 300→240ms; group root `tool-group` + content `tool-group-body`. Logic, approvals, embeds unchanged.
 - src/lib/components/chat/Placeholder.svelte — suggestions wrapper `max-w-2xl` → `max-w-3xl w-full` (aligns cards with input box)
+- backend/open_webui/main.py (also) — `model_groups` router import + `include_router('/api/v1/model-groups')`
+- src/lib/components/AddConnectionModal.svelte — `ConnectionLabelFields` import; `name`/`groupId` vars, init, reset; `name`/`group_id` in the saved config (admin only, `!direct`); `<ConnectionLabelFields>` above the URL row
+- src/lib/components/admin/Settings/Connections/OpenAIConnection.svelte, OllamaConnection.svelte — `ConnectionLabel` + `hasConnectionLabel` imports. The read-only URL `<input>` is wrapped in `{#if hasConnectionLabel(config)}<ConnectionLabel/>{:else}…{/if}`; the input itself is unchanged, only re-indented.
+- src/lib/components/admin/Settings/Models.svelte — model-group imports, `selectedGroup`/`showGroupsModal`/`modelGroupMembers`, one group filter line, `loadModelGroups` in `init`, `<ManageModelGroupsModal>` mount, Group `TagSelector`, "Manage Groups" action, `<ModelGroupChips>` in the row
+- docker-compose.sso.yaml — `ENABLE_OWRF_SYNC=${ENABLE_OWRF_SYNC:-false}`
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -426,3 +431,21 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - DB migration: none (per-key config row is created on first save)
 - Risk / regression notes: empty by default, so nothing changes until an admin sets it. It is separate from Response Watermark, which still only appends to copied text.
 - Verified: backend import (key, admin form field, empty default); vite build
+
+## [2026-11-19] Admin — connection names, model groups, ENABLE_OWRF_SYNC switch
+- Author: Claude (session ref) / reviewer: owner
+- Branch: feature/model-groups (from merge_new_version_v0.13.3)
+- Files created:
+  - backend/open_webui/routers/model_groups.py — admin-only CRUD at `/api/v1/model-groups` (`GET /`, `POST /create`, `POST /id/{id}/update`, `DELETE /id/{id}/delete`). Groups are stored as one list under the `models.groups` config key: `{id, name, description, color, model_ids}`. Names are unique (ignoring case) and colors must be `#rrggbb`. `GET` also returns each group's `connections` and `connection_model_ids`, i.e. the models served by connections whose config has `group_id` set to that group. These come from `app.state.MODELS` (`urlIdx` for OpenAI, `ollama.urls` for Ollama). Deleting a group also removes its `group_id` from the OpenAI/Ollama connection configs.
+  - src/lib/apis/modelGroups/index.ts — API client, shared `modelGroups` store, `loadModelGroups()` (concurrent callers share one request), `groupMembers()`, `hasConnectionLabel()`, color palette
+  - src/lib/components/admin/Settings/Connections/ConnectionLabelFields.svelte — Name input + Model Group dropdown for the connection modal
+  - src/lib/components/admin/Settings/Connections/ConnectionLabel.svelte — one line like the Integrations tool server rows: the name in normal row text and the group name in muted `text-gray-500`. It replaces the URL on named or grouped connections. The URL is still shown in the row tooltip and in Edit. Connections with no name and no group still show the URL.
+  - src/lib/components/admin/Settings/Models/ManageModelGroupsModal.svelte — list / create / edit / delete groups. Models are picked with search. Models that are in a group through their connection are shown checked and locked ("via connection").
+  - src/lib/components/admin/Settings/Models/ModelGroupChips.svelte — group labels on a model row
+- Files modified:
+  - backend/open_webui/transactional_sync.py — new `ENABLE_OWRF_SYNC` env switch (default **off**). When it is off, startup drops the `owrf_*` capture triggers (and their PG functions), no relay task starts, and no webhook calls are made. The outbox table and any undelivered rows are kept and are relayed if the switch is turned back on. When it is on, both `OWRF_SYNC_EVENT_URL` and `OWRF_SYNC_EVENT_SECRET` must be set, or startup fails (as before).
+  - Upstream files: see the Upstream touchpoints list (main.py, AddConnectionModal, OpenAI/OllamaConnection, admin Models.svelte, docker-compose.sso.yaml)
+- Config added: `ENABLE_OWRF_SYNC` (env only, default `false`, no UI); config key `models.groups`; connection config keys `name` and `group_id`
+- DB migration: none. Config rows are created on first save. Turning the sync off drops the owrf triggers only.
+- Risk / regression notes: **behaviour change.** Deployments that relied on the OW→RAGFlow syncer webhook must now set `ENABLE_OWRF_SYNC=true`, or the syncer stops receiving events. Model groups and connection names are admin-only and have no effect on access control or the chat model picker. The Name/Group fields are hidden for users' own direct connections. Workspace (preset) models only join a group if they are added by hand.
+- Verified: backend app import; scratchpad check script (router CRUD, name/color validation, connection-derived members for OpenAI + Ollama, delete clears connection `group_id`; on real SQLite: triggers installed 15 → removed 0, no outbox rows after disable, env value parsing); svelte-check (no new errors in touched files, none in new files); eslint + prettier on the changed frontend files. Manual UI check still needed.

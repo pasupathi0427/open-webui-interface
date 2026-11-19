@@ -19,6 +19,7 @@
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import Textarea from './common/Textarea.svelte';
 	import { normalizeTags } from '$lib/utils/tags';
+	import ConnectionLabelFields from '$lib/components/admin/Settings/Connections/ConnectionLabelFields.svelte'; // CUSTOM
 
 	export let onSubmit: Function = () => {};
 	export let onDelete: Function = () => {};
@@ -47,6 +48,9 @@
 	let passthroughParams = '';
 
 	let tags = [];
+
+	let name = ''; // CUSTOM: admin connection label
+	let groupId = ''; // CUSTOM: admin model group
 
 	let modelId = '';
 	let modelIds = [];
@@ -238,6 +242,8 @@
 			config: {
 				enable: enable,
 				tags: tags,
+				...(!direct && name.trim() ? { name: name.trim() } : {}), // CUSTOM
+				...(!direct && groupId ? { group_id: groupId } : {}), // CUSTOM
 				prefix_id: prefixId,
 				model_ids: modelIds,
 				connection_type: connectionType,
@@ -265,6 +271,8 @@
 		passthroughParams = '';
 		showAdvanced = false;
 		tags = [];
+		name = ''; // CUSTOM
+		groupId = ''; // CUSTOM
 		modelIds = [];
 		headers = '';
 		enable = true;
@@ -288,6 +296,8 @@
 
 			enable = connection.config?.enable ?? true;
 			tags = normalizeTags(connection.config?.tags);
+			name = connection.config?.name ?? ''; // CUSTOM
+			groupId = connection.config?.group_id ?? ''; // CUSTOM
 			prefixId = connection.config?.prefix_id ?? '';
 			passthroughParams = Array.isArray(connection.config?.passthrough_params)
 				? connection.config.passthrough_params.join(', ')
@@ -378,6 +388,11 @@
 									</div>
 								</div>
 							</div>
+						{/if}
+
+						{#if !direct}
+							<!-- CUSTOM: connection Name + model Group -->
+							<ConnectionLabelFields bind:name bind:groupId />
 						{/if}
 
 						<div class="flex gap-2 mt-1.5">
