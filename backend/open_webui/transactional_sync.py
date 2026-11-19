@@ -120,14 +120,45 @@ async def deliver_once(engine, client, url, secret):
                     "WHERE id=:id AND delivered_at IS NULL"), {"id": row["id"], "now": int(time.time())})
 
 
+def enabled() -> bool:
+    """ENABLE_OWRF_SYNC gates the whole outbox; off unless explicitly turned on."""
+    return os.getenv("ENABLE_OWRF_SYNC", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+async def uninstall(engine):
+    """Drop the capture triggers so a disabled sync adds no rows and no write overhead.
+
+    The outbox table and any undelivered rows are kept; they are relayed if sync is re-enabled.
+    """
+    dialect = engine.dialect.name
+    if dialect not in {"sqlite", "postgresql"}:
+        return
+    async with engine.begin() as conn:
+        has_outbox = await conn.run_sync(lambda c: inspect(c).has_table("owrf_event_outbox"))
+        if not has_outbox:
+            return
+        for table in TABLES:
+            for operation in ("insert", "update", "delete"):
+                name = f"owrf_{table}_{operation}"
+                if dialect == "sqlite":
+                    await conn.execute(text(f'DROP TRIGGER IF EXISTS "{name}"'))
+                else:
+                    await conn.execute(text(f'DROP TRIGGER IF EXISTS "{name}" ON "{table}"'))
+                    await conn.execute(text(f'DROP FUNCTION IF EXISTS "{name}_fn"()'))
+    log.info("OW sync disabled (ENABLE_OWRF_SYNC is off); capture triggers removed")
+
+
 @asynccontextmanager
 async def lifespan():
-    url, secret = os.getenv("OWRF_SYNC_EVENT_URL"), os.getenv("OWRF_SYNC_EVENT_SECRET")
-    if not url and not secret:
+    if not enabled():
+        from open_webui.internal.db import async_engine
+        await uninstall(async_engine)
         yield
         return
+    url, secret = os.getenv("OWRF_SYNC_EVENT_URL"), os.getenv("OWRF_SYNC_EVENT_SECRET")
     if not url or not secret:
-        raise RuntimeError("Configure both OWRF_SYNC_EVENT_URL and OWRF_SYNC_EVENT_SECRET")
+        raise RuntimeError(
+            "ENABLE_OWRF_SYNC is on: configure both OWRF_SYNC_EVENT_URL and OWRF_SYNC_EVENT_SECRET")
     from open_webui.internal.db import async_engine
     await install(async_engine)
 
