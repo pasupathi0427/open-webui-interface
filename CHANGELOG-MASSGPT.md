@@ -449,3 +449,13 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - DB migration: none. Config rows are created on first save. Turning the sync off drops the owrf triggers only.
 - Risk / regression notes: **behaviour change.** Deployments that relied on the OW→RAGFlow syncer webhook must now set `ENABLE_OWRF_SYNC=true`, or the syncer stops receiving events. Model groups and connection names are admin-only and have no effect on access control or the chat model picker. The Name/Group fields are hidden for users' own direct connections. Workspace (preset) models only join a group if they are added by hand.
 - Verified: backend app import; scratchpad check script (router CRUD, name/color validation, connection-derived members for OpenAI + Ollama, delete clears connection `group_id`; on real SQLite: triggers installed 15 → removed 0, no outbox rows after disable, env value parsing); svelte-check (no new errors in touched files, none in new files); eslint + prettier on the changed frontend files. Manual UI check still needed.
+
+## [2026-11-20] Docs — RAGFlow chat assistants as Open WebUI models
+- Author: Claude (session ref) / reviewer: owner
+- Files created:
+  - docs/RAGFLOW_MODEL_SETUP.md — admin guide: RAGFlow chat assistant + API key, Open WebUI connection (URL, Prefix ID, Model IDs `model`), task model, model settings (Function Calling = Legacy, capabilities to disable, Workspace tools), test steps, troubleshooting and limits
+- Files modified: none (besides this changelog)
+- Config added: none
+- DB migration: none
+- Risk / regression notes: documentation only; no behaviour change
+- Verified: settings checked against the code (`use_builtin_tools` is off in Legacy mode, `RAG_SYSTEM_CONTEXT` default, Function Calling button order Default → Native → Legacy) and against a working HR policies model with a date tool
