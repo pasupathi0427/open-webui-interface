@@ -45,6 +45,8 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/components/admin/Settings/Connections/OpenAIConnection.svelte, OllamaConnection.svelte — `ConnectionLabel` + `hasConnectionLabel` imports. The read-only URL `<input>` is wrapped in `{#if hasConnectionLabel(config)}<ConnectionLabel/>{:else}…{/if}`; the input itself is unchanged, only re-indented.
 - src/lib/components/admin/Settings/Models.svelte — model-group imports, `selectedGroup`/`showGroupsModal`/`modelGroupMembers`, one group filter line, `loadModelGroups` in `init`, `<ManageModelGroupsModal>` mount, Group `TagSelector`, "Manage Groups" action, `<ModelGroupChips>` in the row
 - docker-compose.sso.yaml — `ENABLE_OWRF_SYNC=${ENABLE_OWRF_SYNC:-false}`
+- docker-compose.sso.yaml (also) — `postgres` service + `owui-postgres` volume; `open-webui` gets `depends_on: postgres`, `DATABASE_URL` (SQLite default) and pool vars; commented `minio`/`redis` services, volumes and env lines
+- .env.example — appended CUSTOM block: Postgres (active), MinIO/S3 and Redis (commented)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -485,3 +487,25 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Risk / regression notes:
   - Run the browser checklist: navbar "Choose model" and reset-requests buttons (navbar and tab bar), themes and pattern background, landing page (glance, hero, cards, phone layout), usage limit banner and 429, Chat Disclaimer, response logo/name toggles, group access, model groups, RAGFlow models, SSO login.
   - New upstream features (video generation, several image models, Tether, coding agents, queued messages) are not covered by our token limits; see the deferred usage-limit fix.
+
+## [2026-11-23] PostgreSQL app database (SQLite → Postgres migration)
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Branch: `feature/postgres-app-db` (from release_UAT 9f5f13106)
+- Files modified:
+  - docker-compose.sso.yaml — `postgres:16` service (healthcheck, `owui-postgres` volume, port on 127.0.0.1 only); `open-webui` waits for it and gets `DATABASE_URL=${DATABASE_URL:-sqlite:////app/backend/data/webui.db}`, `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW`; MinIO and Redis services, volumes and env lines added commented out
+  - .env.example — Postgres variables (active), MinIO/S3 and Redis (commented)
+- Files created:
+  - backend/scripts/migrate_sqlite_to_postgres.py — one-time copy of webui.db into the Postgres schema, in one transaction: same Alembic revision required, refuses a Postgres that has users unless `--overwrite`, FK-ordered batched insert with original IDs, JSON/boolean conversion, NUL stripping, triggers off (`session_replication_role = replica`) so the OWRF sync doesn't queue an event per copied row, sequence reset, row-count check; `--dry-run`
+  - backend/scripts/tests/test_migrate_sqlite_to_postgres.py — value conversion and table-plan tests
+  - docs/POSTGRES_MIGRATION.md — runbook (local and server), checks, rollback, pg_dump backups
+- Files deleted: none
+- Config added: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST_PORT`; existing upstream `DATABASE_URL`, `DATABASE_POOL_*` now passed through compose. `POSTGRES_PASSWORD` is required by compose (`:?`).
+- DB migration: none (schema comes from the existing Alembic chain, head a7d4e2c19b60)
+- Verified:
+  - unit tests: 11 passed (`uvx --with sqlalchemy==2.0.50 --with psycopg2-binary pytest backend/scripts/tests`)
+  - local: Postgres 16 in Docker, Alembic created 56 tables at a7d4e2c19b60; copied a snapshot of the local webui.db (55 tables, 1 448 rows incl. 88 chats, 520 messages, 415 config keys, 249 usage-ledger rows); row counts match and a value-by-value comparison of all 14 806 values found 0 differences
+- Risk / regression notes:
+  - `owrf_event_outbox` is created at startup only with `ENABLE_OWRF_SYNC=true`; start once with sync on before copying, or its rows are skipped (the script says so)
+  - legacy tables Alembic no longer creates (`config_old`, `document`, `chatidtag`) are copied only if present in Postgres; they were empty locally
+  - the server `.env` must set `POSTGRES_PASSWORD` before the next `docker compose up`, even before the switch
+  - `DATABASE_URL` must never be empty (Open WebUI reads the empty value instead of falling back to SQLite)
