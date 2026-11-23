@@ -237,8 +237,8 @@
 			config: {
 				enable: enable,
 				tags: tags,
-				...(!direct && name.trim() ? { name: name.trim() } : {}), // CUSTOM
-				...(!direct && groupId ? { group_id: groupId } : {}), // CUSTOM
+				...(name.trim() ? { name: name.trim() } : {}), // CUSTOM
+				...(groupId ? { group_id: groupId } : {}), // CUSTOM
 				prefix_id: prefixId,
 				model_ids: modelIds,
 				connection_type: connectionType,
@@ -382,10 +382,8 @@
 							</div>
 						</div>
 
-						{#if !direct}
-							<!-- CUSTOM: connection Name + model Group -->
-							<ConnectionLabelFields bind:name bind:groupId />
-						{/if}
+						<!-- CUSTOM: connection Name + model Group -->
+						<ConnectionLabelFields bind:name bind:groupId />
 
 						<div class="flex gap-2 mt-1.5">
 							<div class="flex flex-col w-full">

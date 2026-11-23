@@ -472,6 +472,7 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - src/routes/(app)/workspace/models/create/+page.svelte — upstream moved the page body into `workspace/Models/CreateModel.svelte`; upstream page taken
 - Files modified (beyond conflicts):
   - src/lib/components/workspace/Models/CreateModel.svelte (new upstream file) — default model image → `karix-icons/light-circle.svg`, as on the old create page
+  - src/lib/components/AddConnectionModal.svelte — upstream removed `export let direct` (Tether replaces Direct Connections). Our connection Name / Group code still read `direct`, so the edit dialog failed to open for every connection; the three `!direct` checks are removed (the modal only edits admin connections now)
 - Files created: none
 - DB migration: none (upstream v0.13.4 adds no migrations; single head stays a7d4e2c19b60)
 - Dependencies: upstream adds npm `diff` and pins backend `qdrant-client==1.20.0` and `av==14.0.1`. Behind Zscaler, `npm install` needs `NPM_CONFIG_CAFILE` pointing at a bundle with the Zscaler root (`--use-system-ca` was not enough this time).
@@ -480,6 +481,7 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - line audit: all 166 custom-changed files keep their added lines, except the intentional moves above (old Placeholder layout, Navbar `tick` import, create-page logo now in CreateModel.svelte)
   - custom backend hooks present: usage pre-check in `chat_completion`, `record_usage_from_ctx` in the outlet handler, `transactional_sync` lifespan, UI config flags, manifest colours
   - frontend production build passes
+  - svelte-check: no undefined names in custom files after the AddConnectionModal fix (the remaining ones, e.g. `token` in Chat.svelte and `appData` in +layout.svelte, are identical in upstream v0.13.4)
 - Risk / regression notes:
   - Run the browser checklist: navbar "Choose model" and reset-requests buttons (navbar and tab bar), themes and pattern background, landing page (glance, hero, cards, phone layout), usage limit banner and 429, Chat Disclaimer, response logo/name toggles, group access, model groups, RAGFlow models, SSO login.
   - New upstream features (video generation, several image models, Tether, coding agents, queued messages) are not covered by our token limits; see the deferred usage-limit fix.
