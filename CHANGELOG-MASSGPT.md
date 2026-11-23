@@ -47,6 +47,7 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - docker-compose.sso.yaml — `ENABLE_OWRF_SYNC=${ENABLE_OWRF_SYNC:-false}`
 - docker-compose.sso.yaml (also) — `postgres` service + `owui-postgres` volume; `open-webui` gets `depends_on: postgres`, `DATABASE_URL` (SQLite default) and pool vars; commented `minio`/`redis` services, volumes and env lines
 - .env.example — appended CUSTOM block: Postgres (active), MinIO/S3 and Redis (commented)
+- backend/start_windows.bat — `--loop asyncio:SelectorEventLoop` added to the uvicorn command (+ CUSTOM comment)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -492,8 +493,9 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Author: Claude (session ref) / reviewer: Pasupathi G
 - Branch: `feature/postgres-app-db` (from release_UAT 9f5f13106)
 - Files modified:
-  - docker-compose.sso.yaml — `postgres:16` service (healthcheck, `owui-postgres` volume, port on 127.0.0.1 only); `open-webui` waits for it and gets `DATABASE_URL=${DATABASE_URL:-sqlite:////app/backend/data/webui.db}`, `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW`; MinIO and Redis services, volumes and env lines added commented out
+  - docker-compose.sso.yaml — `postgres:16-bookworm` service (bookworm keeps legacy timezone names such as Asia/Calcutta that Java clients like DBeaver send; Debian 13 rejects them) (healthcheck, `owui-postgres` volume, port on 127.0.0.1 only); `open-webui` waits for it and gets `DATABASE_URL=${DATABASE_URL:-sqlite:////app/backend/data/webui.db}`, `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW`; MinIO and Redis services, volumes and env lines added commented out
   - .env.example — Postgres variables (active), MinIO/S3 and Redis (commented)
+  - backend/start_windows.bat — always passes `--loop asyncio:SelectorEventLoop`. With one worker and no `--reload`, uvicorn 0.54 creates a Proactor loop on Windows before the app loads, so db.py's own policy switch comes too late and psycopg async fails. The backend has no asyncio subprocess use, so the selector loop is safe for SQLite too.
 - Files created:
   - backend/scripts/migrate_sqlite_to_postgres.py — one-time copy of webui.db into the Postgres schema, in one transaction: same Alembic revision required, refuses a Postgres that has users unless `--overwrite`, FK-ordered batched insert with original IDs, JSON/boolean conversion, NUL stripping, triggers off (`session_replication_role = replica`) so the OWRF sync doesn't queue an event per copied row, sequence reset, row-count check; `--dry-run`
   - backend/scripts/tests/test_migrate_sqlite_to_postgres.py — value conversion and table-plan tests
@@ -508,4 +510,5 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - `owrf_event_outbox` is created at startup only with `ENABLE_OWRF_SYNC=true`; start once with sync on before copying, or its rows are skipped (the script says so)
   - legacy tables Alembic no longer creates (`config_old`, `document`, `chatidtag`) are copied only if present in Postgres; they were empty locally
   - the server `.env` must set `POSTGRES_PASSWORD` before the next `docker compose up`, even before the switch
+  - from source on Windows, `DATABASE_URL` must use `127.0.0.1`: psycopg async hangs resolving `localhost`
   - `DATABASE_URL` must never be empty (Open WebUI reads the empty value instead of falling back to SQLite)

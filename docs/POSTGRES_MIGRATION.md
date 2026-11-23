@@ -62,19 +62,19 @@ Run all commands from the repo root.
    python scripts/migrate_sqlite_to_postgres.py               # add --overwrite if Postgres already has users
    ```
    Like the backend, the script reads `DATABASE_URL` from the repo `.env`; an exported variable or `--target` takes precedence.
-6. Start the backend. `dev.sh` (uses `--reload`) works as is. With `start_windows.bat` or any single-worker `uvicorn` command without `--reload`, add `--loop asyncio:SelectorEventLoop` (see Windows notes).
+6. Start the backend as usual. `start_windows.bat` and `dev.sh` (uses `--reload`) work as they are. Only a `uvicorn` command you type yourself, with one worker and no `--reload`, needs `--loop asyncio:SelectorEventLoop` (see Windows notes).
 
 ### Windows notes
 
 These apply only when the backend runs from source on Windows. The Linux Docker image is not affected.
 
-- **`Psycopg cannot use the 'ProactorEventLoop'`:** uvicorn creates a Proactor event loop for a single worker without `--reload`, before Open WebUI loads. Postgres's async driver can't use that loop. Start uvicorn with `--loop asyncio:SelectorEventLoop`, for example:
+- **`Psycopg cannot use the 'ProactorEventLoop'`:** uvicorn creates a Proactor event loop for a single worker without `--reload`, before Open WebUI loads. Postgres's async driver can't use that loop. `start_windows.bat` already passes `--loop asyncio:SelectorEventLoop`; add it when you start uvicorn yourself, for example:
   ```bash
   uvicorn open_webui.main:app --host 0.0.0.0 --port 8080 --forwarded-allow-ips=* --loop asyncio:SelectorEventLoop
   ```
   On Windows, write `--forwarded-allow-ips=*` as one argument. Written as `--forwarded-allow-ips "*"`, uvicorn expands `*` into the file names in the current folder, even inside quotes.
 - **Startup hangs at "Installing external dependencies of functions and tools...":** `DATABASE_URL` uses `localhost`. The async driver hangs resolving it on Windows. Use `127.0.0.1`.
-- **DBeaver: `invalid value for parameter "TimeZone": "Asia/Calcutta"`:** Java reports the old timezone name, which the Debian 13 Postgres image no longer has. Add `-Duser.timezone=Asia/Kolkata` after `-vmargs` in `dbeaver.ini`, then restart DBeaver.
+- **DBeaver: `invalid value for parameter "TimeZone": "Asia/Calcutta"`:** Java reports the old timezone name. The compose file pins `postgres:16-bookworm`, which still has it. Against a Postgres on the default Debian 13 image, add `-Duser.timezone=Asia/Kolkata` after `-vmargs` in `dbeaver.ini` and restart DBeaver.
 
 ## Server (Docker)
 

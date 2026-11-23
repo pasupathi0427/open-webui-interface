@@ -2,7 +2,9 @@ services:
   # CUSTOM (MASS-GPT): app database. Open WebUI uses it when DATABASE_URL points here
   # (see docs/POSTGRES_MIGRATION.md). Published on the host loopback only, for psql/pg_dump.
   postgres:
-    image: postgres:16
+    # bookworm (Debian 12) keeps legacy timezone names such as Asia/Calcutta, which Java clients
+    # (DBeaver, JDBC) send; the default Debian 13 image rejects them.
+    image: postgres:16-bookworm
     container_name: open-webui-postgres
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-openwebui}
