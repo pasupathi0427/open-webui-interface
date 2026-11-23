@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { brandLogoCircle, brandVariant } from '$lib/stores';
 	import type { TerminalContext } from '$lib/types';
+	import type { Writable } from 'svelte/store';
 	import { toast } from 'svelte-sonner';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
@@ -12,14 +13,7 @@
 
 	import { updateFolderById } from '$lib/apis/folders';
 
-	import {
-		config,
-		user,
-		models as _models,
-		temporaryChatEnabled,
-		selectedFolder
-	} from '$lib/stores';
-	import { refreshChatList, refreshFolderChatLists } from '$lib/stores/chatList';
+	import { config, user, selectedFolder } from '$lib/stores';
 	import { sanitizeResponseContent, extractCurlyBraceWords } from '$lib/utils';
 	import {
 		resolveLocalizedModelDescription,
@@ -34,9 +28,11 @@
 	import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
 	import MessageInput from './MessageInput.svelte';
 	import FolderPlaceholder from './Placeholder/FolderPlaceholder.svelte';
-	import FolderTitle from './Placeholder/FolderTitle.svelte';
 	import LandingHero from './Placeholder/LandingHero.svelte'; // CUSTOM
 	import ChatGlance from './Placeholder/ChatGlance.svelte'; // CUSTOM
+	import { getChatContext } from '$lib/components/chat/context';
+
+	const { models: _models, temporary } = getChatContext();
 
 	const i18n: any = getContext('i18n');
 
@@ -56,10 +52,13 @@
 
 	export let history;
 	export let chatId = '';
+	export let folderTabActions: import('svelte').Snippet | undefined = undefined;
 
 	export let prompt = '';
 	export let files = [];
 	export let terminalContext: TerminalContext | null = null;
+	export let selectedTerminalId: Pick<Writable<string | null>, 'subscribe' | 'set'>;
+	export let terminalSkills: Writable<any[]>;
 	export let messageInput = null;
 
 	export let selectedToolIds = [];
@@ -70,6 +69,9 @@
 	export let showCommands = false;
 
 	export let imageGenerationEnabled = false;
+	export let selectedImageModelId = '';
+	export let videoGenerationEnabled = false;
+	export let selectedVideoModelId = '';
 	export let codeInterpreterEnabled = false;
 	export let webSearchEnabled = false;
 	export let toolApprovalMode = 'full';
@@ -79,6 +81,7 @@
 	export let onUpload: Function = (e) => {};
 	export let onUpdate: (data?: { file?: any }) => void = () => {};
 	export let onSelect = (e) => {};
+	export let onTemporaryChange: ((value: boolean) => void) | null = null;
 	export let onChange = (e) => {};
 	export let onWebSearchToggle: Function = () => {};
 	export let messageQueue: { id: string; prompt: string; files: any[] }[] = [];
@@ -95,6 +98,11 @@
 	};
 
 	export let dragged = false;
+
+	// Height of the floating folder composer, so lists can scroll clear of it.
+	let composerHeight = 0;
+	// The composer only belongs with the folder's chats, not its automations.
+	let folderSection: 'chats' | 'automations' | 'knowledge' = 'chats';
 
 	let models = [];
 	export let selectedModelIdx = 0;
@@ -122,15 +130,73 @@
 	// True when viewing a shared folder the current user doesn't own AND lacks write access
 	$: folderReadOnly =
 		$selectedFolder != null &&
+		$user?.role !== 'admin' &&
 		$selectedFolder.user_id !== $user?.id &&
 		!$selectedFolder.write_access;
 </script>
 
-<!-- CUSTOM (phones): one full-height column, chat input docked at the bottom (reference mobile) -->
+{#snippet composer(placeholder = '')}
+	<MessageInput
+		{selectedTerminalId}
+		{terminalSkills}
+		{chatId}
+		{onTemporaryChange}
+		bind:terminalContext
+		{callActive}
+		{callEnabled}
+		bind:this={messageInput}
+		{history}
+		bind:selectedModels
+		{onModelSelect}
+		bind:chatFiles
+		bind:params
+		{onParamChange}
+		bind:files
+		bind:prompt
+		bind:autoScroll
+		bind:selectedToolIds
+		bind:selectedSkillIds
+		bind:selectedFilterIds
+		bind:imageGenerationEnabled
+		bind:selectedImageModelId
+		bind:videoGenerationEnabled
+		bind:selectedVideoModelId
+		bind:codeInterpreterEnabled
+		bind:webSearchEnabled
+		bind:atSelectedModel
+		bind:showCommands
+		bind:dragged
+		{pendingOAuthTools}
+		{oauthRedirectHandler}
+		{toolApprovalMode}
+		{onToolApprovalModeChange}
+		{stopResponse}
+		{createMessagePair}
+		{placeholder}
+		{onChange}
+		{onUpload}
+		{onUpdate}
+		{messageQueue}
+		{onQueueSendNow}
+		{onQueueEdit}
+		{onQueueDelete}
+		{askUser}
+		{onWebSearchToggle}
+		on:chatVariables
+		on:submit={(e) => {
+			dispatch('submit', e.detail);
+		}}
+	/>
+{/snippet}
+
+<!-- CUSTOM (phones): home view is one full-height column, chat input docked at the bottom (reference mobile) -->
 <div
-	class="m-auto w-full max-w-[58rem] px-1 md:@3xl:px-20 translate-y-6 py-24 text-center max-md:m-0 max-md:self-stretch max-md:min-h-full max-md:flex max-md:flex-col max-md:translate-y-0 max-md:pt-14 max-md:pb-0"
+	class="w-full {$selectedFolder
+		? 'flex h-full min-h-0 flex-col overflow-hidden'
+		: 'm-auto max-w-[58rem] px-1 md:@3xl:px-20 translate-y-6 py-24 max-md:m-0 max-md:self-stretch max-md:min-h-full max-md:flex max-md:flex-col max-md:translate-y-0 max-md:pt-14 max-md:pb-0'} text-center"
 >
-	{#if $temporaryChatEnabled}
+	<!-- In a folder, temporary mode shows on the composer alone. -->
+	{#if $temporary && !$selectedFolder}
 		<Tooltip
 			content={$i18n.t("This chat won't appear in history and your messages will not be saved.")}
 			className="w-full flex justify-center mb-0.5"
@@ -142,93 +208,65 @@
 		</Tooltip>
 	{/if}
 
-	<div
-		class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4 max-md:contents"
-	>
-		<div class="w-full flex flex-col justify-center items-center max-md:contents">
-			{#if $selectedFolder}
-				<FolderTitle
-					folder={$selectedFolder}
-					readOnly={folderReadOnly}
-					onUpdate={async () => {
-						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
-					}}
-					onDelete={async () => {
-						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
+	{#if $selectedFolder}
+		<div
+			class="relative min-h-0 w-full flex-1"
+			style="--folder-composer-space: {folderReadOnly || folderSection !== 'chats'
+				? 0
+				: composerHeight}px"
+		>
+			<FolderPlaceholder
+				folder={$selectedFolder}
+				readOnly={folderReadOnly}
+				bind:folderTabActions
+				bind:folderSection
+				onNewChat={() => messageInput?.focus()}
+			/>
 
-						selectedFolder.set(null);
-					}}
-				/>
-			{:else}
+			{#if !folderReadOnly}
+				<!-- Same mount as the in-chat composer, floating over the list and board. -->
+				<div
+					class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-white from-40% to-transparent pt-8 pb-2 text-left dark:from-gray-900 {dragged
+						? 'z-0'
+						: 'z-10'}"
+					class:hidden={folderSection !== 'chats'}
+					bind:clientHeight={composerHeight}
+				>
+					<div class="pointer-events-auto">
+						{@render composer()}
+					</div>
+				</div>
+			{/if}
+		</div>
+	{:else}
+		<div
+			class="w-full shrink-0 text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4 max-md:contents"
+		>
+			<div class="w-full flex flex-col justify-center items-center max-md:contents">
 				<!-- CUSTOM: "Chat space at a glance" (admin toggle) -->
 				{#if $config?.features?.enable_chat_glance}
 					<div class="w-full @md:max-w-3xl mb-6 md:-translate-y-20"><ChatGlance /></div>
 				{/if}
 				<!-- CUSTOM: landing greeting (reference .lp-eyebrow) -->
 				<LandingHero />
-			{/if}
-
-			<div
-				class="text-base font-normal @md:max-w-3xl w-full py-3 {atSelectedModel
-					? 'mt-2'
-					: ''} max-md:order-last max-md:mt-auto max-md:sticky max-md:bottom-0 max-md:z-10 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-			>
-				{#if !($selectedFolder && folderReadOnly)}
-					<MessageInput
-						{chatId}
-						bind:terminalContext
-						{callActive}
-						{callEnabled}
-						bind:this={messageInput}
-						{history}
-						bind:selectedModels
-						{onModelSelect}
-						bind:chatFiles
-						bind:params
-						{onParamChange}
-						bind:files
-						bind:prompt
-						bind:autoScroll
-						bind:selectedToolIds
-						bind:selectedSkillIds
-						bind:selectedFilterIds
-						bind:imageGenerationEnabled
-						bind:codeInterpreterEnabled
-						bind:webSearchEnabled
-						bind:atSelectedModel
-						bind:showCommands
-						bind:dragged
-						{pendingOAuthTools}
-						{oauthRedirectHandler}
-						{toolApprovalMode}
-						{onToolApprovalModeChange}
-						{stopResponse}
-						{createMessagePair}
-						placeholder={$i18n.t('How can I help you today?')}
-						{onChange}
-						{onUpload}
-						{onUpdate}
-						{messageQueue}
-						{onQueueSendNow}
-						{onQueueEdit}
-						{onQueueDelete}
-						{askUser}
-						{onWebSearchToggle}
-						on:chatVariables
-						on:submit={(e) => {
-							dispatch('submit', e.detail);
-						}}
-					/>
-				{/if}
 			</div>
 		</div>
-	</div>
 
-	{#if $selectedFolder}
-		<div class="mx-auto px-4 md:max-w-3xl md:px-6 min-h-62" in:fade={{ duration: 200, delay: 200 }}>
-			<FolderPlaceholder folder={$selectedFolder} />
+		<div
+			class="relative text-base font-normal mx-auto @md:max-w-3xl py-3 w-full {atSelectedModel
+				? 'mt-2'
+				: ''} max-md:order-last max-md:mt-auto max-md:sticky max-md:bottom-0 max-md:z-10 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+		>
+			<!-- Soft halo, like the denser fade around the in-chat composer, so it doesn't float on a vivid background. -->
+			<div
+				aria-hidden="true"
+				class="pointer-events-none absolute -inset-x-8 -inset-y-3 rounded-[3rem] bg-white/40 blur-2xl dark:bg-gray-900/40"
+			></div>
+			<div class="relative">
+				{@render composer($i18n.t('How can I help you today?'))}
+			</div>
 		</div>
-	{:else}
+
 		<!-- CUSTOM: max-w-3xl so the suggestion cards line up with the input box (was max-w-2xl); --sc-bleed = mx-5 so the mobile card row reaches the screen edge -->
 		<div class="mx-auto max-w-3xl w-full mt-2 max-md:mt-8" in:fade={{ duration: 200, delay: 200 }}>
 			<div class="mx-5" style="--sc-bleed: 1.25rem">

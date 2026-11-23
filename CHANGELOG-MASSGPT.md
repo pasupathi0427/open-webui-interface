@@ -459,3 +459,27 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - DB migration: none
 - Risk / regression notes: documentation only; no behaviour change
 - Verified: settings checked against the code (`use_builtin_tools` is off in Legacy mode, `RAG_SYSTEM_CONTEXT` default, Function Calling button order Default → Native → Legacy) and against a working HR policies model with a date tool
+## [2026-11-23] Upstream merge — Open WebUI v0.13.4 into merge_new_version_v0.13.4
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Backup: branch `backup_release_prod_before_v0.13.4` = previous head 0ddd351d9 (unchanged)
+- Merged: upstream tag `v0.13.4` (330 upstream commits) into release_prod; every custom change kept
+- Conflicts resolved (ours kept, adapted to upstream's new structure):
+  - src/lib/components/chat/Chat.svelte — our imports (themes, usage, ChatDisclaimer) kept with upstream's (no `setContext`); `selectedModelId` / `onChooseModel` still passed to Navbar (upstream dropped `moveChatHandler` there)
+  - src/lib/components/chat/Navbar.svelte — upstream imports (no more title-generation helpers) + our custom imports; `settings` store re-imported (upstream removed it, our model-picker trigger uses it); reset-requests / model-picker modals kept; upstream `$temporaryChat` adopted
+  - src/lib/components/chat/Placeholder.svelte — upstream's new folder view (FolderPlaceholder + `composer` snippet) taken as is; home view rebuilt from upstream with our changes: ChatGlance + LandingHero instead of the model heading, phone layout classes on the root (home only) and on the composer wrapper (docked at the bottom), suggestion cards `max-w-3xl` + `--sc-bleed`; upstream `$temporary` adopted
+  - src/lib/components/chat/Messages/ResponseMessage.svelte — upstream gets `audioQueue`/`models` from chat context; kept `brandVariant` + `functions as localizedFunctions` in the store import
+  - src/lib/components/chat/MessageInput/CallOverlay.svelte, Commands/AtCommands.svelte, src/lib/components/workspace/Models.svelte — both import sets
+  - src/routes/(app)/workspace/models/create/+page.svelte — upstream moved the page body into `workspace/Models/CreateModel.svelte`; upstream page taken
+- Files modified (beyond conflicts):
+  - src/lib/components/workspace/Models/CreateModel.svelte (new upstream file) — default model image → `karix-icons/light-circle.svg`, as on the old create page
+- Files created: none
+- DB migration: none (upstream v0.13.4 adds no migrations; single head stays a7d4e2c19b60)
+- Dependencies: upstream adds npm `diff` and pins backend `qdrant-client==1.20.0` and `av==14.0.1`. Behind Zscaler, `npm install` needs `NPM_CONFIG_CAFILE` pointing at a bundle with the Zscaler root (`--use-system-ca` was not enough this time).
+- Verified:
+  - backend imports as v0.13.4 with 679 routes incl. usage, group-access, model-groups and both RAGFlow sync endpoints; fresh DB migrates to a7d4e2c19b60 with usage_config / usage_ledger / usage_request
+  - line audit: all 166 custom-changed files keep their added lines, except the intentional moves above (old Placeholder layout, Navbar `tick` import, create-page logo now in CreateModel.svelte)
+  - custom backend hooks present: usage pre-check in `chat_completion`, `record_usage_from_ctx` in the outlet handler, `transactional_sync` lifespan, UI config flags, manifest colours
+  - frontend production build passes
+- Risk / regression notes:
+  - Run the browser checklist: navbar "Choose model" and reset-requests buttons (navbar and tab bar), themes and pattern background, landing page (glance, hero, cards, phone layout), usage limit banner and 429, Chat Disclaimer, response logo/name toggles, group access, model groups, RAGFlow models, SSO login.
+  - New upstream features (video generation, several image models, Tether, coding agents, queued messages) are not covered by our token limits; see the deferred usage-limit fix.
