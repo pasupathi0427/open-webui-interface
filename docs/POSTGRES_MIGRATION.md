@@ -31,12 +31,12 @@ The script refuses to run when:
 
 ## Settings
 
-| Variable | Where | Meaning |
-|---|---|---|
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | `.env` | Database the `postgres` service creates. Use a URL-safe password (letters and digits). |
-| `DATABASE_URL` | `.env` | `postgresql://USER:PASSWORD@HOST:5432/DB`. HOST is `postgres` inside compose and `127.0.0.1` when the backend runs from source (not `localhost`, see Windows notes). Unset means SQLite. Never set it to an empty value. |
-| `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW` | `.env` | Connection pool, default 10 and 10. |
-| `POSTGRES_HOST_PORT` | `.env` | Host port, bound to 127.0.0.1 only. Default 5432. |
+| Variable                                                  | Where    | Meaning                                                                                                                                                                                                                          |
+| --------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | `.env` | Database the `postgres` service creates. Use a URL-safe password (letters and digits).                                                                                                                                         |
+| `DATABASE_URL`                                          | `.env` | `postgresql://USER:PASSWORD@HOST:5432/DB`. HOST is `postgres` inside compose and `127.0.0.1` when the backend runs from source (not `localhost`, see Windows notes). Unset means SQLite. Never set it to an empty value. |
+| `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW`    | `.env` | Connection pool, default 10 and 10.                                                                                                                                                                                              |
+| `POSTGRES_HOST_PORT`                                    | `.env` | Host port, bound to 127.0.0.1 only. Default 5432.                                                                                                                                                                                |
 
 MinIO and Redis are prepared in `docker-compose.sso.yaml` and `.env.example`, but commented out. They are not part of this migration.
 
@@ -61,6 +61,7 @@ Run all commands from the repo root.
    python scripts/migrate_sqlite_to_postgres.py --dry-run
    python scripts/migrate_sqlite_to_postgres.py               # add --overwrite if Postgres already has users
    ```
+
    Like the backend, the script reads `DATABASE_URL` from the repo `.env`; an exported variable or `--target` takes precedence.
 6. Start the backend as usual. `start_windows.bat` and `dev.sh` (uses `--reload`) work as they are. Only a `uvicorn` command you type yourself, with one worker and no `--reload`, needs `--loop asyncio:SelectorEventLoop` (see Windows notes).
 
@@ -72,6 +73,7 @@ These apply only when the backend runs from source on Windows. The Linux Docker 
   ```bash
   uvicorn open_webui.main:app --host 0.0.0.0 --port 8080 --forwarded-allow-ips=* --loop asyncio:SelectorEventLoop
   ```
+
   On Windows, write `--forwarded-allow-ips=*` as one argument. Written as `--forwarded-allow-ips "*"`, uvicorn expands `*` into the file names in the current folder, even inside quotes.
 - **Startup hangs at "Installing external dependencies of functions and tools...":** `DATABASE_URL` uses `localhost`. The async driver hangs resolving it on Windows. Use `127.0.0.1`.
 - **DBeaver: `invalid value for parameter "TimeZone": "Asia/Calcutta"`:** Java reports the old timezone name. The compose file pins `postgres:16-bookworm`, which still has it. Against a Postgres on the default Debian 13 image, add `-Duser.timezone=Asia/Kolkata` after `-vmargs` in `dbeaver.ini` and restart DBeaver.
@@ -91,7 +93,7 @@ These apply only when the backend runs from source on Windows. The Linux Docker 
 4. Set `DATABASE_URL=postgresql://USER:PASSWORD@postgres:5432/DB` in `.env`.
 5. Start Open WebUI once so it creates the schema. With `ENABLE_OWRF_SYNC=true`, this also creates the sync outbox table, so pending sync events are copied too. When the log shows the server is up, stop it:
    ```bash
-   docker compose -f docker-compose.sso.yaml up -d open-webui
+   docker compose -f docker-compose.sso.yaml up -d open-webui --build
    docker compose -f docker-compose.sso.yaml logs -f open-webui     # wait for "Application startup complete"
    docker compose -f docker-compose.sso.yaml stop open-webui
    ```
@@ -102,6 +104,7 @@ These apply only when the backend runs from source on Windows. The Linux Docker 
    docker compose -f docker-compose.sso.yaml run --rm --no-deps open-webui \
      python scripts/migrate_sqlite_to_postgres.py --overwrite
    ```
+
    `--overwrite` is needed here because the first start may already have created the first user.
 7. Start Open WebUI:
    ```bash
