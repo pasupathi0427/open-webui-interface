@@ -541,3 +541,8 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - the backfill must use One UI's `WEBUI_SECRET_KEY`. Locally, `start_windows.bat` takes the key from `backend/.webui_secret_key`, not from `.env`, so run the backfill with that key (in Docker, run it in the container)
   - deleting a tool leaves its exported rows
   - upstream merge: if the valve save or user delete functions change, re-apply the two calls; save the COSEC valves once and check `updated_at`
+
+## [2026-11-24] Postgres port published on all interfaces
+- Author: Pasupathi G
+- Files modified: docker-compose.sso.yaml — `postgres` port `127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432` → `${POSTGRES_HOST_PORT:-5432}:5432`, so the app reading `integration.user_tool_credentials` can connect from another machine; docs/POSTGRES_MIGRATION.md, docs/TOOL_CREDENTIALS_EXPORT.md updated (new "Network access to Postgres" section)
+- Risk / regression notes: every Postgres login, including the owner, is reachable from the network. Docker-published ports bypass ufw/firewalld; restrict 5432 to the reading app's IP in the `DOCKER-USER` chain or a security group, and use strong passwords.

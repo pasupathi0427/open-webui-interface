@@ -60,7 +60,7 @@ If `TOOL_CREDENTIALS_EXPORT` is set but the key is missing or invalid, One UI re
 
    This user can read only this table. It cannot read One UI's tables or write anything.
 
-   The reading app connects to the Postgres service. Inside the compose network the host is `postgres`. From the host machine it is `127.0.0.1:5432`; the port is published on loopback only.
+   The reading app connects to the Postgres service. Inside the compose network the host is `postgres`. From other machines it is `<server IP>:5432`. The port is published on all interfaces, so limit who can reach it with the firewall (see below).
 
 ## Reading the password (other app)
 
@@ -84,3 +84,10 @@ DROP SCHEMA integration CASCADE;
 ## After an upstream merge
 
 The export hooks into `update_user_valves_by_id_and_user_id` (`models/tools.py`) and `delete_user_by_id` (`models/users.py`). After merging, save the COSEC valves once and check that `updated_at` changes for your row.
+
+## Network access to Postgres
+
+`docker-compose.sso.yaml` publishes Postgres on port 5432 on every interface of the server, so the reading app can connect from another machine. Every Postgres login, including the One UI owner account, can then be tried from the network.
+
+- Docker-published ports bypass `ufw`/`firewalld` rules. Restrict the port in the `DOCKER-USER` iptables chain, or with a cloud security group, to the reading app's IP only.
+- Use strong passwords for both the owner (`POSTGRES_PASSWORD`) and `cosec_reader`.

@@ -36,7 +36,7 @@ The script refuses to run when:
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | `.env` | Database the `postgres` service creates. Use a URL-safe password (letters and digits).                                                                                                                                         |
 | `DATABASE_URL`                                          | `.env` | `postgresql://USER:PASSWORD@HOST:5432/DB`. HOST is `postgres` inside compose and `127.0.0.1` when the backend runs from source (not `localhost`, see Windows notes). Unset means SQLite. Never set it to an empty value. |
 | `DATABASE_POOL_SIZE`, `DATABASE_POOL_MAX_OVERFLOW`    | `.env` | Connection pool, default 10 and 10.                                                                                                                                                                                              |
-| `POSTGRES_HOST_PORT`                                    | `.env` | Host port, bound to 127.0.0.1 only. Default 5432.                                                                                                                                                                                |
+| `POSTGRES_HOST_PORT`                                    | `.env` | Host port, published on all interfaces. Default 5432.                                                                                                                                                                            |
 
 MinIO and Redis are prepared in `docker-compose.sso.yaml` and `.env.example`, but commented out. They are not part of this migration.
 
