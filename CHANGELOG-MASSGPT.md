@@ -48,6 +48,10 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - docker-compose.sso.yaml (also) — `postgres` service + `owui-postgres` volume; `open-webui` gets `depends_on: postgres`, `DATABASE_URL` (SQLite default) and pool vars; commented `minio`/`redis` services, volumes and env lines
 - .env.example — appended CUSTOM block: Postgres (active), MinIO/S3 and Redis (commented)
 - backend/start_windows.bat — `--loop asyncio:SelectorEventLoop` added to the uvicorn command (+ CUSTOM comment)
+- backend/open_webui/models/tools.py — `update_user_valves_by_id_and_user_id`: one `export_user_valves(...)` call after the settings save (tool credentials export)
+- backend/open_webui/models/users.py — `delete_user_by_id`: one `remove_user(id)` call after the commit (tool credentials export)
+- backend/open_webui/main.py (also) — `install_credentials_export(async_engine)` before the OWRF sync lifespan
+- docker-compose.sso.yaml (also) — `TOOL_CREDENTIALS_EXPORT`, `TOOL_CREDENTIALS_EXPORT_KEY` (empty = off)
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -512,3 +516,28 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
   - the server `.env` must set `POSTGRES_PASSWORD` before the next `docker compose up`, even before the switch
   - from source on Windows, `DATABASE_URL` must use `127.0.0.1`: psycopg async hangs resolving `localhost`
   - `DATABASE_URL` must never be empty (Open WebUI reads the empty value instead of falling back to SQLite)
+
+## [2026-11-24] Tool credentials export (COSEC username/password for another app)
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Branch: `feature/tool-credentials-export` (from release_UAT 50d55101e)
+- Requirement: another application needs each user's COSEC username and password from the tool's user valves, read through a select-only DB user, without depending on One UI's tables. A plain DB trigger can't do it: with `ENABLE_VALVE_ENCRYPTION=true` the valves are a Fernet string keyed from `WEBUI_SECRET_KEY`, which must not be shared (it also signs logins).
+- Files created:
+  - backend/open_webui/tool_credentials_export.py — off unless `TOOL_CREDENTIALS_EXPORT` (+ key) is set; PostgreSQL only. Creates `integration.user_tool_credentials` at startup (outside Alembic); upserts username + Fernet-encrypted password (separate `TOOL_CREDENTIALS_EXPORT_KEY`) on valve save, deletes the row when either field is cleared or the user is deleted. Never fails the user's save; no secrets in logs. Startup refuses a missing or invalid key.
+  - backend/scripts/export_tool_credentials.py — one-time backfill from valves saved before the export was on
+  - backend/scripts/tests/test_tool_credentials_export.py — spec parsing, field extraction, off by default, key validation, encryption round trip
+  - docs/TOOL_CREDENTIALS_EXPORT.md — settings, turning on, read-only role SQL, reading the password, turning off, upgrade check
+- Files modified: backend/open_webui/models/tools.py, backend/open_webui/models/users.py, backend/open_webui/main.py, docker-compose.sso.yaml, .env.example (see touchpoints)
+- Config added: `TOOL_CREDENTIALS_EXPORT`, `TOOL_CREDENTIALS_EXPORT_KEY` (both empty by default = off)
+- DB migration: none in Alembic; the `integration` schema and table are created at startup only when the export is on
+- Verified (local Postgres, export on only for the test processes):
+  - unit tests: 20 passed (incl. the earlier migration-script tests)
+  - backfill copied the one saved COSEC login; a real save through `Tools.update_user_valves_by_id_and_user_id` re-exported it; the password decrypts with the shared key and is not stored in plain text
+  - clearing the password removes the row; a tool not listed is ignored; deleting the user removes the rows
+  - select-only role: reads the table; `"user"` read, insert and creating tables in `public` all denied
+  - backend starts with the export on and logs `Tool credentials export enabled for: cosec_attendance`; with the variable set but no key, startup stops with a clear error
+  - test schema dropped afterwards
+- Risk / regression notes:
+  - off by default: with the variables empty nothing is created and both hooks return immediately
+  - the backfill must use One UI's `WEBUI_SECRET_KEY`. Locally, `start_windows.bat` takes the key from `backend/.webui_secret_key`, not from `.env`, so run the backfill with that key (in Docker, run it in the container)
+  - deleting a tool leaves its exported rows
+  - upstream merge: if the valve save or user delete functions change, re-apply the two calls; save the COSEC valves once and check `updated_at`

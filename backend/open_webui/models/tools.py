@@ -389,6 +389,10 @@ class ToolsTable:
             # Update the user settings in the database
             await Users.update_user_by_id(user_id, {'settings': user_settings}, db=db)
 
+            from open_webui.tool_credentials_export import export_user_valves  # CUSTOM
+
+            await export_user_valves(user_id, user.email, id, valves)  # CUSTOM: no-op unless configured
+
             return valves
         except Exception as e:
             log.exception(f'Error updating user valves by id {id} and user_id {user_id}: {e}')
