@@ -1,7 +1,6 @@
 services:
   # CUSTOM (MASS-GPT): app database. Open WebUI uses it when DATABASE_URL points here
-  # (see docs/POSTGRES_MIGRATION.md). Published on all host interfaces so other apps can connect;
-  # restrict access with the host firewall.
+  # (see docs/POSTGRES_MIGRATION.md). Published on the host loopback only, for psql/pg_dump.
   postgres:
     # bookworm (Debian 12) keeps legacy timezone names such as Asia/Calcutta, which Java clients
     # (DBeaver, JDBC) send; the default Debian 13 image rejects them.
@@ -14,7 +13,7 @@ services:
     volumes:
       - owui-postgres:/var/lib/postgresql/data
     ports:
-      - ${POSTGRES_HOST_PORT:-5432}:5432
+      - 127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
@@ -65,9 +64,6 @@ services:
       - DATABASE_URL=${DATABASE_URL:-sqlite:////app/backend/data/webui.db}
       - DATABASE_POOL_SIZE=${DATABASE_POOL_SIZE:-10}
       - DATABASE_POOL_MAX_OVERFLOW=${DATABASE_POOL_MAX_OVERFLOW:-10}
-      # CUSTOM (MASS-GPT): tool credentials export, off while empty (docs/TOOL_CREDENTIALS_EXPORT.md).
-      - TOOL_CREDENTIALS_EXPORT=${TOOL_CREDENTIALS_EXPORT:-}
-      - TOOL_CREDENTIALS_EXPORT_KEY=${TOOL_CREDENTIALS_EXPORT_KEY:-}
       # CUSTOM (MASS-GPT): MinIO file storage, off for now.
       # - STORAGE_PROVIDER=s3
       # - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}

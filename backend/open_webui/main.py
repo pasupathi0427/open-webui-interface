@@ -521,10 +521,6 @@ async def lifespan(app: FastAPI):
             log.warning(f'License data retrieval failed during startup: {e}')
 
     from open_webui.transactional_sync import lifespan as sync_lifespan  # CUSTOM
-    from open_webui.tool_credentials_export import install as install_credentials_export  # CUSTOM
-    from open_webui.internal.db import async_engine as _credentials_export_engine  # CUSTOM
-
-    await install_credentials_export(_credentials_export_engine)  # CUSTOM: no-op unless configured
 
     async with sync_lifespan():
         app.state.startup_complete = True

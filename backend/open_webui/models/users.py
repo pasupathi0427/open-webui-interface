@@ -881,9 +881,6 @@ class UsersTable:
             await session.execute(delete(AccessGrant).filter_by(principal_type='user', principal_id=id))
             await session.execute(delete(User).where(User.id == id))
             await session.commit()
-            from open_webui.tool_credentials_export import remove_user  # CUSTOM
-
-            await remove_user(id)  # CUSTOM: no-op unless configured
             return True
 
     async def get_user_api_key_by_id(self, id: str, db: AsyncSession | None = None) -> str | None:
