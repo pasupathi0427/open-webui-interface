@@ -48,6 +48,14 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - docker-compose.sso.yaml (also) — `postgres` service + `owui-postgres` volume; `open-webui` gets `depends_on: postgres`, `DATABASE_URL` (SQLite default) and pool vars; commented `minio`/`redis` services, volumes and env lines
 - .env.example — appended CUSTOM block: Postgres (active), MinIO/S3 and Redis (commented)
 - backend/start_windows.bat — `--loop asyncio:SelectorEventLoop` added to the uvicorn command (+ CUSTOM comment)
+- backend/open_webui/config.py (also) — `USER_PERMISSIONS_CHAT_EDIT_RESPONSE` env (defaults to `USER_PERMISSIONS_CHAT_EDIT`) + `'edit_response'` in `DEFAULT_USER_PERMISSIONS['chat']`
+- backend/open_webui/routers/users.py (also) — `ChatPermissions.edit_response: bool = True`
+- src/lib/constants/permissions.ts — `chat.edit_response: true`
+- src/lib/components/admin/Users/Groups/Permissions.svelte — "Allow Chat Edit" label → "Allow User Message Edit" (still `chat.edit`); new "Allow Response Edit" switch (`chat.edit_response`)
+- src/lib/components/chat/Messages/ResponseMessage.svelte (also) — reply Edit button checks `chat.edit_response` instead of `chat.edit`
+- src/lib/i18n/locales/en-US/translation.json (also) — keys "Allow Response Edit", "Allow User Message Edit"
+- src/lib/components/admin/Users/Groups/Permissions.svelte (also) — root `permission-rows` class + `<style>` block at the end (row hover highlight)
+- src/lib/components/common/InterfaceSettings.svelte — `settingRowClass` gains hover highlight classes
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -519,3 +527,34 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Reason: the export kept a second, decryptable copy of every user's COSEC password, and Postgres was reachable from the network. Not needed now.
 - To bring it back: `git cherry-pick 574b286e1` (and `c2d268cc1` only if another machine must connect). Both stay on branch `feature/tool-credentials-export`, with docs/TOOL_CREDENTIALS_EXPORT.md.
 - DB: nothing to undo where the export was never turned on. Where it was, drop the copy: `DROP SCHEMA integration CASCADE;` and drop the reader role.
+
+## [2026-11-25] Permissions — separate switches for editing user messages and model replies
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Branch: `feature/separate-response-edit` (from release_UAT 77b441fea)
+- Requirement: allow users to edit their own messages but not the model's replies (or the other way round). Upstream's single `chat.edit` permission controlled both Edit buttons.
+- Files modified:
+  - backend/open_webui/config.py — `USER_PERMISSIONS_CHAT_EDIT_RESPONSE`; `edit_response` in the default chat permissions
+  - backend/open_webui/routers/users.py — `ChatPermissions.edit_response`
+  - src/lib/constants/permissions.ts — `edit_response` default
+  - src/lib/components/admin/Users/Groups/Permissions.svelte — "Allow User Message Edit" (`chat.edit`) and new "Allow Response Edit" (`chat.edit_response`)
+  - src/lib/components/chat/Messages/ResponseMessage.svelte — reply Edit button uses `chat.edit_response`
+  - src/lib/i18n/locales/en-US/translation.json — two labels
+- Files created / deleted: none
+- Config added: `USER_PERMISSIONS_CHAT_EDIT_RESPONSE` (true/false). Unset, it takes the value of `USER_PERMISSIONS_CHAT_EDIT`, so a server that turned editing off by env keeps reply editing off too.
+- DB migration: none. Saved permissions without the new key get it from the env default (backend) and `true` (admin panel form).
+- Enforcement: UI only, the same as upstream `chat.edit` — the Edit button is hidden; the chat-save API does not check either permission.
+- Verified: backend files compile; env fallback checked for all combinations; prettier check passes on changed frontend files; translation JSON parses.
+- Risk / regression notes:
+  - if "Allow Chat Edit" was already turned off in the Admin Panel (saved permissions), reply editing comes back after this deploy, because the saved permissions have no `edit_response` key and the env default is true. Turn off "Allow Response Edit" once after deploying.
+  - admins always see both Edit buttons (unchanged).
+
+## [2026-11-25] Row hover highlight in settings
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Branch: `feature/separate-response-edit`
+- Requirement: long settings lists need a visual guide from a label to its switch.
+- Files modified:
+  - src/lib/components/admin/Users/Groups/Permissions.svelte — hover highlight on every permission row (scoped style)
+  - src/lib/components/common/InterfaceSettings.svelte — hover highlight on interface setting rows (user Settings › Interface and Admin › Default Interface Settings)
+- Config / DB: none
+- Not changed: "iframe Sandbox Allow Same Origin" stays off by default. Turning it on lets HTML shown in those iframes (model output, tool output, files) run with the app's origin and read the logged-in user's token. If needed, an admin turns it on in Admin › Settings › General › Default Interface Settings.
+- Verified: prettier passes on the changed Svelte files.

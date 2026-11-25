@@ -131,7 +131,9 @@
 	let fontFamilyInput = '';
 	let showTextScaleSlider = false;
 	let showFontFamilyInput = false;
-	const settingRowClass = 'group/setting-row flex items-center justify-between gap-2.5';
+	// CUSTOM: hover highlight so the label and its control read as one row
+	const settingRowClass =
+		'group/setting-row flex items-center justify-between gap-2.5 -mx-1.5 px-1.5 rounded-lg transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]';
 	const settingLabelClass =
 		'min-w-0 text-xs text-gray-600 group-has-[button[id$=-control]:enabled]/setting-row:cursor-pointer group-has-[button[id$=-control]:disabled]/setting-row:cursor-not-allowed transition-colors duration-150 group-hover/setting-row:text-gray-900 group-focus-within/setting-row:text-gray-900 dark:text-gray-400 dark:group-hover/setting-row:text-white dark:group-focus-within/setting-row:text-white';
 	const settingControlClass = 'flex shrink-0 items-center justify-end gap-1.5';

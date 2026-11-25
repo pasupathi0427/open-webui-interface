@@ -34,7 +34,8 @@
 	});
 </script>
 
-<div class="space-y-2">
+<!-- CUSTOM: permission-rows enables the row hover highlight (style block at the end) -->
+<div class="space-y-2 permission-rows">
 	<!-- {$i18n.t('Default Model')}
 	{$i18n.t('Model Filtering')}
 	{$i18n.t('Model Permissions')}
@@ -1310,3 +1311,19 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	/* CUSTOM: highlight the hovered row so each label lines up with its switch */
+	.permission-rows :global(.flex.w-full.justify-between) {
+		margin-inline: -0.375rem;
+		padding-inline: 0.375rem;
+		border-radius: 0.5rem;
+		transition: background-color 150ms;
+	}
+	.permission-rows :global(.flex.w-full.justify-between:hover) {
+		background-color: rgb(0 0 0 / 0.04);
+	}
+	:global(.dark) .permission-rows :global(.flex.w-full.justify-between:hover) {
+		background-color: rgb(255 255 255 / 0.05);
+	}
+</style>
