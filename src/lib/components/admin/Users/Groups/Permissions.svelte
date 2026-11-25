@@ -707,12 +707,33 @@
 
 		<div class="flex flex-col w-full">
 			<div class="flex w-full justify-between my-1">
+				<!-- CUSTOM: chat.edit covers the user's own messages; replies have their own switch below -->
 				<div class=" self-center text-xs font-normal">
-					{$i18n.t('Allow Chat Edit')}
+					{$i18n.t('Allow User Message Edit')}
 				</div>
-				<Switch bind:state={permissions.chat.edit} ariaLabel={$i18n.t('Allow Chat Edit')} />
+				<Switch bind:state={permissions.chat.edit} ariaLabel={$i18n.t('Allow User Message Edit')} />
 			</div>
 			{#if defaultPermissions?.chat?.edit && !permissions.chat.edit}
+				<div>
+					<div class="text-xs text-gray-500">
+						{$i18n.t('This is a default user permission and will remain enabled.')}
+					</div>
+				</div>
+			{/if}
+		</div>
+
+		<!-- CUSTOM: separate permission for editing model replies -->
+		<div class="flex flex-col w-full">
+			<div class="flex w-full justify-between my-1">
+				<div class=" self-center text-xs font-normal">
+					{$i18n.t('Allow Response Edit')}
+				</div>
+				<Switch
+					bind:state={permissions.chat.edit_response}
+					ariaLabel={$i18n.t('Allow Response Edit')}
+				/>
+			</div>
+			{#if defaultPermissions?.chat?.edit_response && !permissions.chat.edit_response}
 				<div>
 					<div class="text-xs text-gray-500">
 						{$i18n.t('This is a default user permission and will remain enabled.')}

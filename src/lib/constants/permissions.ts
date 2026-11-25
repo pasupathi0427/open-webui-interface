@@ -50,6 +50,7 @@ export const DEFAULT_PERMISSIONS = {
 		regenerate_response: true,
 		rate_response: true,
 		edit: true,
+		edit_response: true, // CUSTOM
 		share: true,
 		export: true,
 		import: true,

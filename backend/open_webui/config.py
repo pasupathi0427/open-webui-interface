@@ -1911,6 +1911,12 @@ USER_PERMISSIONS_CHAT_RATE_RESPONSE = os.getenv('USER_PERMISSIONS_CHAT_RATE_RESP
 
 USER_PERMISSIONS_CHAT_EDIT = os.getenv('USER_PERMISSIONS_CHAT_EDIT', 'True').lower() == 'true'
 
+# CUSTOM: editing a model reply has its own permission; chat.edit covers the user's own messages.
+# Unset, it follows USER_PERMISSIONS_CHAT_EDIT so a server that turned editing off keeps both off.
+USER_PERMISSIONS_CHAT_EDIT_RESPONSE = (
+    os.getenv('USER_PERMISSIONS_CHAT_EDIT_RESPONSE', str(USER_PERMISSIONS_CHAT_EDIT)).lower() == 'true'
+)
+
 USER_PERMISSIONS_CHAT_SHARE = os.getenv('USER_PERMISSIONS_CHAT_SHARE', 'True').lower() == 'true'
 
 USER_PERMISSIONS_CHAT_ALLOW_PUBLIC_SHARING = (
@@ -2037,6 +2043,7 @@ DEFAULT_USER_PERMISSIONS = {
         'regenerate_response': USER_PERMISSIONS_CHAT_REGENERATE_RESPONSE,
         'rate_response': USER_PERMISSIONS_CHAT_RATE_RESPONSE,
         'edit': USER_PERMISSIONS_CHAT_EDIT,
+        'edit_response': USER_PERMISSIONS_CHAT_EDIT_RESPONSE,  # CUSTOM
         'share': USER_PERMISSIONS_CHAT_SHARE,
         'export': USER_PERMISSIONS_CHAT_EXPORT,
         'import': USER_PERMISSIONS_CHAT_IMPORT,

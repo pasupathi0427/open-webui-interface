@@ -1127,7 +1127,8 @@
 
 							{#if message.done}
 								{#if !readOnly}
-									{#if $user?.role === 'user' ? ($user?.permissions?.chat?.edit ?? true) : true}
+									<!-- CUSTOM: replies use chat.edit_response; chat.edit covers the user's own messages -->
+									{#if $user?.role === 'user' ? ($user?.permissions?.chat?.edit_response ?? true) : true}
 										<Tooltip content={$i18n.t('Edit')} placement="bottom">
 											<button
 												aria-label={$i18n.t('Edit')}

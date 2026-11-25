@@ -258,6 +258,7 @@ class ChatPermissions(BaseModel):
     regenerate_response: bool = True
     rate_response: bool = True
     edit: bool = True
+    edit_response: bool = True  # CUSTOM: edit model replies, separate from editing own messages
     share: bool = True
     export: bool = True
     import_: bool = Field(default=True, alias='import')
