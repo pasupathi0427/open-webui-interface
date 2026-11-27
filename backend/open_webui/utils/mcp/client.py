@@ -75,12 +75,14 @@ class OAuthTokenAuth(httpx2.Auth):
 
 
 class MCPClient:
-    def __init__(self, event_caller=None, server_name=''):
+    def __init__(self, event_caller=None, server_name='', apps_enabled=True):
         self.client: Optional[Client] = None
         self.session_task: Optional[asyncio.Task] = None
         self.connect_kwargs: Optional[dict] = None
         self.event_caller = event_caller
         self.server_name = server_name
+        # CUSTOM: the connection's "Show MCP App widgets" switch (config.enable_apps).
+        self.apps_enabled = apps_enabled
         self.instructions: Optional[str] = None
         self.tool_definitions: dict[str, dict] = {}
 
@@ -231,7 +233,7 @@ class MCPClient:
         raw = await self.call_tool_raw(function_name, function_args)
         context = self.normalize_tool_result(raw)
         tool = self.tool_definitions.get(function_name, {})
-        if not ui_resource_uri(tool):
+        if not self.apps_enabled or not ui_resource_uri(tool):  # CUSTOM: widgets off for this connection
             return context
         return MCPAppResult(
             embed={

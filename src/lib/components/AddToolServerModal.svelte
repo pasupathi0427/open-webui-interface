@@ -54,6 +54,7 @@
 
 	let functionNameFilterList = '';
 	let accessGrants = [];
+	let enableApps = true; // CUSTOM: "Show MCP App widgets" (config.enable_apps)
 
 	let id = '';
 	let name = '';
@@ -390,7 +391,8 @@
 			config: {
 				enable: enable,
 				function_name_filter_list: functionNameFilterList,
-				access_grants: accessGrants
+				access_grants: accessGrants,
+				...(type === 'mcp' ? { enable_apps: enableApps } : {}) // CUSTOM
 			},
 			info: {
 				id: id,
@@ -444,6 +446,7 @@
 		enable = true;
 		functionNameFilterList = '';
 		accessGrants = [];
+		enableApps = true;
 		headers = '';
 		showAdvanced = false;
 	};
@@ -476,6 +479,7 @@
 			enable = connection.config?.enable ?? true;
 			functionNameFilterList = connection.config?.function_name_filter_list ?? '';
 			accessGrants = connection.config?.access_grants ?? [];
+			enableApps = connection.config?.enable_apps ?? true;
 
 			if (connection.info?.id) {
 				await tick();
@@ -1041,6 +1045,28 @@
 								/>
 							</div>
 						</div>
+
+						<!-- CUSTOM: per-connection switch for MCP App widgets -->
+						{#if type === 'mcp'}
+							<hr class=" border-gray-100/50 dark:border-gray-700/10 my-2.5 w-full" />
+
+							<div class="flex w-full justify-between items-center mb-3">
+								<Tooltip
+									content={$i18n.t(
+										"Turn off if this server's widget shows an empty box. Answers are unchanged."
+									)}
+									placement="top-start"
+								>
+									<div class="text-xs text-gray-500 cursor-help">
+										{$i18n.t('Show MCP App widgets')}
+									</div>
+								</Tooltip>
+
+								<Tooltip content={enableApps ? $i18n.t('Enabled') : $i18n.t('Disabled')}>
+									<Switch bind:state={enableApps} />
+								</Tooltip>
+							</div>
+						{/if}
 					</div>
 
 					{#if type === 'mcp'}

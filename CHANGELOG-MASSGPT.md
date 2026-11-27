@@ -56,6 +56,11 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - src/lib/i18n/locales/en-US/translation.json (also) — keys "Allow Response Edit", "Allow User Message Edit"
 - src/lib/components/admin/Users/Groups/Permissions.svelte (also) — root `permission-rows` class + `<style>` block at the end (row hover highlight)
 - src/lib/components/common/InterfaceSettings.svelte — `settingRowClass` gains hover highlight classes
+- backend/open_webui/utils/mcp/client.py — `MCPClient(apps_enabled=True)`; `call_tool` returns the text result instead of `MCPAppResult` when it is false
+- backend/open_webui/utils/tools.py — `connect_mcp_server` passes `config.enable_apps` (default true) to `MCPClient`
+- backend/open_webui/routers/tools.py — `mcp_app_rpc` returns 403 when the connection's widgets are off
+- src/lib/components/AddToolServerModal.svelte — `enableApps` var, init, reset, `config.enable_apps` (MCP only), "Show MCP App widgets" switch under the function filter
+- src/lib/i18n/locales/en-US/translation.json (also) — "Show MCP App widgets" and its hint
 
 ## [2026-10-05] Phase 0 - analysis only, no source changes
 - Author: Claude (Phase 0 session) / reviewer: <owner>
@@ -558,3 +563,15 @@ Every hunk in an upstream Open WebUI file is marked `CUSTOM:` and listed here, s
 - Config / DB: none
 - Not changed: "iframe Sandbox Allow Same Origin" stays off by default. Turning it on lets HTML shown in those iframes (model output, tool output, files) run with the app's origin and read the logged-in user's token. If needed, an admin turns it on in Admin › Settings › General › Default Interface Settings.
 - Verified: prettier passes on the changed Svelte files.
+
+## [2026-11-27] MCP — per-connection switch for MCP App widgets
+- Author: Claude (session ref) / reviewer: Pasupathi G
+- Branch: `feature/mcp-apps-toggle` (from release_UAT 0354d642f)
+- Requirement: the Atlassian Jira MCP widget renders as an empty dark box. It needs browser storage, which the `srcdoc` sandbox (no `allow-same-origin`) denies. Upstream closed this as a known limitation (open-webui#34179) with no setting to turn widgets off.
+- Change: new switch "Show MCP App widgets" in Admin › Settings › External Tools › (MCP connection), saved as `config.enable_apps`, default on. Off: the tool returns only its text result, so no widget is shown; the model gets the same content as before. The app RPC endpoint refuses calls for that connection. The client still advertises `io.modelcontextprotocol/ui`, so the server's text result does not change.
+- Files modified: see the touchpoints above (5 files)
+- Config: no env var. Connections seeded by `TOOL_SERVER_CONNECTIONS` can set `"config": {"enable_apps": false}`. Saved in the database, applies on the next tool call without a restart.
+- DB migration: none. Connections without the key keep widgets on.
+- Not changed: no `allow-same-origin` on the app frame (it would expose `localStorage.token`).
+- Verified: scratch check with the project venv — switch on returns `MCPAppResult`, off returns the identical text list; prettier passes on the Svelte and translation files; translation JSON parses.
+- Upstream merge: drop this change if upstream adds its own toggle for MCP Apps.

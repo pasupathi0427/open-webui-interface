@@ -266,6 +266,7 @@ async def connect_mcp_server(
     client = MCPClient(
         event_caller=extra_params.get('__event_call__') if metadata.get('session_id') else None,
         server_name=server_id,
+        apps_enabled=(mcp_server_connection.get('config') or {}).get('enable_apps', True),  # CUSTOM
     )
     try:
         await client.connect(

@@ -336,6 +336,8 @@ async def mcp_app_rpc(request: Request, id: str, form_data: MCPAppRPCForm, user=
                 raise HTTPException(status_code=404, detail='Tool not found')
             client, _ = connection
             try:
+                if not client.apps_enabled:  # CUSTOM: widgets turned off for this connection
+                    raise HTTPException(status_code=403, detail='MCP App widgets are turned off for this connection')
                 origin = client.tool_definitions.get(form_data.tool_name)
                 if not origin or not ui_resource_uri(origin) or not tool_visible_to(origin, 'model'):
                     raise HTTPException(status_code=403, detail='App tool is unavailable')
